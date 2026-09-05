@@ -899,46 +899,160 @@ import Navigation from '../../components/Navigation.astro';
     updateUI();
   });
 
+  const API = (window as any).PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
+  let realDocsCache: Record<string, any> = {};
+
+  function applyRealDocumentAnalysis(r: any) {
+    const q = r.quantum_analysis || {};
+    const sec = r.security || {};
+    const verdict = (r.verdict || 'UNKNOWN').toUpperCase();
+
+    // Compute real fidelity F (state similarity)
+    let F = q.state_similarity != null ? Number(q.state_similarity) : null;
+    if (F == null) {
+      if (verdict === 'AUTHENTIC') F = 0.985;
+      else if (verdict === 'TAMPERED') F = 0.125;
+      else if (verdict === 'SUSPICIOUS') F = 0.620;
+      else F = 0.500;
+    }
+    F = Math.min(0.9999, Math.max(0.0001, F));
+
+    // Disturbance and anomaly angles
+    const A = q.anomaly_distance != null ? Number(q.anomaly_distance) : (2 / Math.PI) * Math.acos(Math.sqrt(F));
+    const theta = 2 * Math.acos(Math.sqrt(F));
+    const phi = A * Math.PI;
+
+    alpha = { re: Math.cos(theta / 2), im: 0 };
+    beta  = { re: Math.cos(phi) * Math.sin(theta / 2), im: Math.sin(phi) * Math.sin(theta / 2) };
+
+    if (verdict === 'AUTHENTIC') {
+      appliedGates = ['H', 'H'];
+    } else if (verdict === 'TAMPERED') {
+      appliedGates = ['X', 'Z', 'MEASURE'];
+    } else {
+      appliedGates = ['H', 'S', 'Z'];
+    }
+
+    fidelityVal = Math.round(F * 1000) / 10;
+    metricFidelity.textContent = fidelityVal.toFixed(1) + '%';
+    normalizeState();
+    updateUI();
+  }
+
   // --- Presets / Document State Selector ---
-  presetSelector.addEventListener('change', () => {
+  presetSelector.addEventListener('change', async () => {
     const p = presetSelector.value;
+    if (p.startsWith('real_')) {
+      const docId = p.replace('real_', '');
+      if (realDocsCache[docId]) {
+        applyRealDocumentAnalysis(realDocsCache[docId]);
+      } else {
+        try {
+          const res = await fetch(`${API}/api/analysis/${docId}`);
+          if (res.ok) {
+            const data = await res.json();
+            realDocsCache[docId] = data;
+            applyRealDocumentAnalysis(data);
+          }
+        } catch (err) {
+          console.warn('Failed to load real analysis data:', err);
+        }
+      }
+      return;
+    }
+
     switch (p) {
       case 'ground':
         alpha = { re: 1, im: 0 };
         beta  = { re: 0, im: 0 };
         appliedGates = [];
+        fidelityVal = 100.0;
         break;
       case 'excited':
         alpha = { re: 0, im: 0 };
         beta  = { re: 1, im: 0 };
         appliedGates = ['X'];
+        fidelityVal = 0.0;
         break;
       case 'hadamard':
         alpha = { re: 1 / Math.SQRT2, im: 0 };
         beta  = { re: 1 / Math.SQRT2, im: 0 };
         appliedGates = ['H'];
+        fidelityVal = 99.8;
         break;
       case 'phase_y':
         alpha = { re: 1 / Math.SQRT2, im: 0 };
         beta  = { re: 0, im: 1 / Math.SQRT2 };
         appliedGates = ['H', 'S'];
+        fidelityVal = 95.4;
         break;
       case 'doc_authentic':
         alpha = { re: 0.92, im: 0.08 };
         beta  = { re: 0.38, im: 0.05 };
         appliedGates = ['H', 'X'];
+        fidelityVal = 98.5;
         break;
       case 'doc_tampered':
         alpha = { re: 0.22, im: 0.15 };
         beta  = { re: 0.94, im: -0.21 };
         appliedGates = ['X', 'Z'];
+        fidelityVal = 18.2;
         break;
     }
+    metricFidelity.textContent = fidelityVal.toFixed(1) + '%';
     updateUI();
   });
 
-  // Initial render
+  // --- Dynamic Real Documents Loader ---
+  async function loadRealDocuments() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryId = urlParams.get('id');
+
+      const res = await fetch(`${API}/api/analyses?limit=30`);
+      if (!res.ok) return;
+      const list = await res.json();
+      if (!Array.isArray(list) || list.length === 0) return;
+
+      let group = document.getElementById('real-docs-optgroup') as HTMLOptGroupElement | null;
+      if (!group) {
+        group = document.createElement('optgroup');
+        group.id = 'real-docs-optgroup';
+        group.label = '⚡ Verified Documents (Live Analyses)';
+        presetSelector.appendChild(group);
+      }
+
+      list.forEach((item: any) => {
+        const fname = item.document?.filename || 'Document';
+        const v = item.verdict || 'ANALYZED';
+        const opt = document.createElement('option');
+        opt.value = `real_${item.analysis_id}`;
+        opt.textContent = `📄 ${fname} [${v}]`;
+        group!.appendChild(opt);
+      });
+
+      // If query parameter is provided, automatically select and load that document
+      if (queryId) {
+        const targetVal = `real_${queryId}`;
+        const optionExists = Array.from(presetSelector.options).some(o => o.value === targetVal);
+        if (optionExists) {
+          presetSelector.value = targetVal;
+        }
+        const singleRes = await fetch(`${API}/api/analysis/${queryId}`);
+        if (singleRes.ok) {
+          const detail = await singleRes.json();
+          realDocsCache[queryId] = detail;
+          applyRealDocumentAnalysis(detail);
+        }
+      }
+    } catch (err) {
+      console.warn('Live document loader offline:', err);
+    }
+  }
+
+  // Initial render & live documents check
   updateUI();
+  loadRealDocuments();
 </script>
 
 <style>
