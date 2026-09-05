@@ -75,14 +75,14 @@ export default function HeroSection() {
       className="relative w-full h-screen min-h-[640px] flex flex-col justify-between overflow-hidden bg-[#fafafa] dark:bg-[#121214] text-neutral-900 dark:text-white select-none transition-colors duration-300"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      {/* BACKGROUND 3D VIDEO: Scaled a little smaller and brightened */}
+      {/* BACKGROUND 3D VIDEO: Scaled smaller */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute w-[110%] h-[110%] max-w-none top-[-5%] left-[-22%] md:left-[-15%] lg:left-[-9%] object-cover pointer-events-none transition-all duration-700"
+          className="absolute w-[85%] h-[85%] max-w-none top-[7%] left-[-10%] md:left-[-6%] lg:left-[-2%] object-cover pointer-events-none transition-all duration-700"
           style={{
             filter: isDark
               ? 'brightness(0.88) contrast(1.1) saturate(1.05)'
