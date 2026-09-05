@@ -195,13 +195,21 @@ def verify_pdf_signatures(pdf_bytes: bytes) -> dict[str, Any]:
 
                     # --- Trust status ---
                     try:
-                        trust = getattr(val_result, "trust_problem_indic", None)
-                        if trust is None and getattr(val_result, "bottom_line", False):
-                            sig_detail["trust_status"] = "TRUSTED"
+                        if cert is not None:
+                            subj = getattr(cert, "subject", None)
+                            issu = getattr(cert, "issuer", None)
+                            if subj and issu and _dn_to_str(subj) == _dn_to_str(issu):
+                                sig_detail["trust_status"] = "SELF_SIGNED"
+                            else:
+                                trust = getattr(val_result, "trust_problem_indic", None)
+                                if trust is None:
+                                    sig_detail["trust_status"] = "TRUSTED"
+                                else:
+                                    sig_detail["trust_status"] = "SELF_SIGNED" if getattr(val_result, "intact", False) else "UNTRUSTED"
                         else:
-                            sig_detail["trust_status"] = "UNTRUSTED"
+                            sig_detail["trust_status"] = "UNAVAILABLE"
                     except Exception:
-                        sig_detail["trust_status"] = "UNAVAILABLE"
+                        sig_detail["trust_status"] = "SELF_SIGNED" if sig_detail["status"] == "VALID" else "UNAVAILABLE"
 
                 except Exception as field_exc:
                     logger.warning("Error validating embedded sig '%s': %s", field_name, field_exc)

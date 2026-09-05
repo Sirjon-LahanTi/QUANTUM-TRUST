@@ -165,7 +165,7 @@ def determine_verdict(
     Rules (in priority order):
     1. If content was modified or signature is invalid → TAMPERED
     2. If no signature → SUSPICIOUS (cannot authenticate)
-    3. If signature valid + integrity verified + no critical cert issues → AUTHENTIC
+    3. If signature valid + integrity verified → AUTHENTIC
     4. Otherwise → SUSPICIOUS
     """
     sig_status   = (sig_result.get("overall_status") or "NONE").upper()
@@ -175,22 +175,21 @@ def determine_verdict(
     threat_level = (threat_result.get("threat_level") or "LOW").upper()
 
     # TAMPERED: clear evidence of modification or failed crypto
-    if sig_status == "INVALID" or integ_mod == "MODIFIED" or integ_status == "FAILED":
+    if sig_status in ("INVALID", "CORRUPTED") or integ_mod == "MODIFIED" or integ_status == "FAILED":
         return "TAMPERED"
 
     # SUSPICIOUS: no signature
     if sig_status == "NONE":
         return "SUSPICIOUS"
 
-    # AUTHENTIC: valid signature, verified integrity, acceptable trust
+    # AUTHENTIC: valid cryptographic signature and intact document integrity
     if (
         sig_status == "VALID"
-        and integ_status == "VERIFIED"
-        and integ_mod in ("NO_UNAUTHORIZED_CHANGES", "PERMITTED_CHANGES")
-        and cert_trust not in ("UNTRUSTED", "EXPIRED")
-        and threat_level not in ("CRITICAL",)
+        and (integ_status in ("VERIFIED", "UNKNOWN") or integrity_result.get("integrity_ok") is True)
+        and integ_mod in ("NO_UNAUTHORIZED_CHANGES", "PERMITTED_CHANGES", "UNKNOWN")
+        and not cert_info.get("is_expired", False)
     ):
         return "AUTHENTIC"
 
-    # SUSPICIOUS: everything else
+    # SUSPICIOUS: everything else (e.g. unknown algorithm, corrupted payload, or unverified state)
     return "SUSPICIOUS"
