@@ -18,10 +18,10 @@
   --border-accent: #000000;
 
   /* Text */
-  --text-primary:   #0A0A0A;
-  --text-secondary: #55555C;
-  --text-muted:     #888892;
-  --text-code:      #1A1A1A;
+  --text-primary:   #000000;
+  --text-secondary: #000000;
+  --text-muted:     #111111;
+  --text-code:      #000000;
   --text-accent:    #000000;
 
   /* Accent */
@@ -30,19 +30,19 @@
   --accent-glow: rgba(0, 0, 0, 0.05);
 
   /* Semantic Monochrome */
-  --ok:           #0A0A0A;
+  --ok:           #000000;
   --ok-dim:       #F7F7F8;
-  --ok-border:    #D1D1D6;
+  --ok-border:    #000000;
 
-  --warn:         #44444A;
+  --warn:         #000000;
   --warn-dim:     #EFEFF1;
-  --warn-border:  #C4C4CA;
+  --warn-border:  #000000;
 
-  --danger:        #0A0A0A;
+  --danger:        #000000;
   --danger-dim:    #E5E5E8;
-  --danger-border: #0A0A0A;
+  --danger-border: #000000;
 
-  --neutral:     #777780;
+  --neutral:     #000000;
   --neutral-dim: #F2F2F5;
 
   /* Overlay */
@@ -98,15 +98,15 @@ html.dark,
   --bg-active:   #2C2C32;
 
   /* Borders */
-  --border:        #26262B;
-  --border-subtle: #1A1A1E;
+  --border:        #333338;
+  --border-subtle: #25252A;
   --border-accent: #FFFFFF;
 
   /* Text */
-  --text-primary:   #F5F5F7;
-  --text-secondary: #A0A0AA;
-  --text-muted:     #686875;
-  --text-code:      #E8E8EE;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #FFFFFF;
+  --text-muted:     #FFFFFF;
+  --text-code:      #FFFFFF;
   --text-accent:    #FFFFFF;
 
   /* Accent */
@@ -117,17 +117,17 @@ html.dark,
   /* Semantic Monochrome */
   --ok:           #FFFFFF;
   --ok-dim:       #131316;
-  --ok-border:    #35353C;
+  --ok-border:    #FFFFFF;
 
-  --warn:         #D4D4DC;
+  --warn:         #FFFFFF;
   --warn-dim:     #18181C;
-  --warn-border:  #45454E;
+  --warn-border:  #FFFFFF;
 
   --danger:        #FFFFFF;
   --danger-dim:    #1F1A1A;
-  --danger-border: #7A3535;
+  --danger-border: #FFFFFF;
 
-  --neutral:     #888894;
+  --neutral:     #FFFFFF;
   --neutral-dim: #141416;
 
   /* Overlay */
@@ -347,8 +347,8 @@ code, pre, .mono {
 .card-label {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--text-muted);
-  font-weight: 500;
+  color: var(--text-primary);
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: var(--space-2);
@@ -488,8 +488,8 @@ code, pre, .mono {
 .data-table th {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--text-muted);
-  font-weight: 500;
+  color: var(--text-primary);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: var(--space-2) var(--space-3);
@@ -711,8 +711,8 @@ code, pre, .mono {
 .section-title {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text-primary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: var(--space-4);
