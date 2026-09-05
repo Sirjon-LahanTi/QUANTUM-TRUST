@@ -72,27 +72,31 @@ export default function HeroSection() {
 
   return (
     <div
-      className="relative w-full h-screen min-h-[640px] flex flex-col justify-between overflow-hidden bg-[#121214] text-white select-none transition-colors duration-300"
+      className="relative w-full h-screen min-h-[640px] flex flex-col justify-between overflow-hidden bg-[#fafafa] dark:bg-[#121214] text-neutral-900 dark:text-white select-none transition-colors duration-300"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      {/* BACKGROUND 3D VIDEO: Shifted to left-center */}
+      {/* BACKGROUND 3D VIDEO: Scaled a little smaller and brightened */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute w-[140%] h-[140%] max-w-none top-[-20%] left-[-35%] md:left-[-25%] lg:left-[-18%] object-cover pointer-events-none transition-all duration-700"
+          className="absolute w-[110%] h-[110%] max-w-none top-[-5%] left-[-22%] md:left-[-15%] lg:left-[-9%] object-cover pointer-events-none transition-all duration-700"
           style={{
             filter: isDark
-              ? 'brightness(0.85) contrast(1.1) saturate(1.05)'
-              : 'brightness(1.02) contrast(1.05)',
+              ? 'brightness(0.88) contrast(1.1) saturate(1.05)'
+              : 'brightness(1.12) contrast(1.04) saturate(1.05)',
           }}
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260517_222138_3e3205be-3364-417b-a64a-bfe087acbec4.mp4"
         />
-        {/* Vignette and Dark Theme Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+        {/* Dark Theme Overlay only in dark mode */}
+        {isDark && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/50 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 pointer-events-none" />
+          </>
+        )}
       </div>
 
       {/* 1. TOP BAR */}
