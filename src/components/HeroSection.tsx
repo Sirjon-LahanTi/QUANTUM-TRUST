@@ -86,13 +86,17 @@ export default function HeroSection() {
           style={{
             filter: isDark
               ? 'brightness(0.85) contrast(1.1) saturate(1.05)'
-              : 'brightness(1.02) contrast(1.05)',
+              : 'brightness(1.04) contrast(1.02) saturate(1.05)',
           }}
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260517_222138_3e3205be-3364-417b-a64a-bfe087acbec4.mp4"
         />
-        {/* Vignette and Dark Theme Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+        {/* Vignette and Dark Theme Overlay only in dark mode */}
+        {isDark && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+          </>
+        )}
       </div>
 
       {/* 1. TOP BAR */}
@@ -104,17 +108,17 @@ export default function HeroSection() {
           variants={fadeDown}
           initial="initial"
           animate="animate"
-          className="flex items-center gap-3.5 cursor-pointer no-underline text-white group"
+          className="flex items-center gap-3.5 cursor-pointer no-underline text-black dark:text-white group"
           aria-label="Quantum Trust Home"
         >
-          <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center p-1.5 shadow-md group-hover:scale-105 transition-transform border border-white/10">
+          <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center p-1.5 shadow-md group-hover:scale-105 transition-transform border border-black/10 dark:border-white/10">
             <img
               src="/favicon.svg"
               alt="Quantum Trust Logo"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain filter dark:invert-0"
             />
           </div>
-          <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-[0.22em] uppercase text-white transition-colors duration-200">
+          <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-[0.22em] uppercase text-black dark:text-white transition-colors duration-200">
             Quantum Trust
           </span>
         </motion.a>
@@ -128,7 +132,7 @@ export default function HeroSection() {
             initial="initial"
             animate="animate"
             onClick={toggleTheme}
-            className="w-11 h-11 rounded-full bg-[#18181b]/90 backdrop-blur-md border border-white/15 text-amber-400 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 hover:border-white/30 shadow-md focus:outline-none"
+            className="w-11 h-11 rounded-full bg-white/90 dark:bg-[#18181b]/90 backdrop-blur-md border border-black/10 dark:border-white/15 text-neutral-800 dark:text-amber-400 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-md focus:outline-none"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
@@ -151,25 +155,25 @@ export default function HeroSection() {
                   exit={{ rotate: -90, scale: 0, opacity: 0 }}
                   transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
-                  <Moon className="w-5 h-5 text-white stroke-[2.2]" />
+                  <Moon className="w-5 h-5 text-neutral-800 stroke-[2.2]" />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.button>
 
-          {/* Hamburger Menu Button (Solid White with Black Lines) */}
+          {/* Hamburger Menu Button */}
           <motion.button
             custom={1.1}
             variants={fadeDown}
             initial="initial"
             animate="animate"
             onClick={() => setMenuOpen(true)}
-            className="w-11 h-11 rounded-full bg-white text-black flex flex-col items-center justify-center gap-1 cursor-pointer transition-transform hover:scale-105 active:scale-95 focus:outline-none shadow-lg"
+            className="w-11 h-11 rounded-full bg-black dark:bg-white text-white dark:text-black flex flex-col items-center justify-center gap-1 cursor-pointer transition-transform hover:scale-105 active:scale-95 focus:outline-none shadow-lg"
             aria-label="Open Navigation Menu"
           >
-            <span className="w-4 h-[2px] bg-black rounded-full" />
-            <span className="w-4 h-[2px] bg-black rounded-full" />
-            <span className="w-4 h-[2px] bg-black rounded-full" />
+            <span className="w-4 h-[2px] bg-white dark:bg-black rounded-full" />
+            <span className="w-4 h-[2px] bg-white dark:bg-black rounded-full" />
+            <span className="w-4 h-[2px] bg-white dark:bg-black rounded-full" />
           </motion.button>
         </div>
       </header>
@@ -186,7 +190,7 @@ export default function HeroSection() {
             animate="animate"
             className="my-auto max-w-[240px] pt-4"
           >
-            <p className="text-[12px] sm:text-[13px] md:text-[14px] font-bold tracking-[0.16em] uppercase text-white/95 leading-[1.35] drop-shadow-sm">
+            <p className="text-[12px] sm:text-[13px] md:text-[14px] font-bold tracking-[0.16em] uppercase text-black dark:text-white leading-[1.35] drop-shadow-sm">
               QUANTUM-INSPIRED<br />
               DIGITAL SIGNATURE<br />
               SECURITY &<br />
@@ -202,7 +206,7 @@ export default function HeroSection() {
             animate="animate"
             className="mt-auto max-w-[320px] text-left sm:text-right sm:self-start lg:self-end pb-2"
           >
-            <p className="text-[11px] sm:text-[12px] md:text-[12.5px] font-bold tracking-[0.16em] uppercase text-neutral-200/90 leading-[1.45] drop-shadow-sm">
+            <p className="text-[11px] sm:text-[12px] md:text-[12.5px] font-bold tracking-[0.16em] uppercase text-black dark:text-white leading-[1.45] drop-shadow-sm">
               REAL CRYPTOGRAPHIC INTEGRITY<br />
               ANALYSIS, TAMPER DETECTION &<br />
               ZERO-KNOWLEDGE DOCUMENT<br />
@@ -211,7 +215,7 @@ export default function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Right Column: Hero Headline, Subtitles, and Centered Purple Glowing CTA Button */}
+        {/* Right Column: Hero Headline, Subtitles, and Centered CTA Button */}
         <div className="lg:col-span-7 flex flex-col items-center text-center justify-center gap-3 sm:gap-4 md:gap-5 py-4 lg:pl-10">
           {/* Eyebrow / Top Subtitle */}
           <motion.div
@@ -220,7 +224,7 @@ export default function HeroSection() {
             initial="initial"
             animate="animate"
           >
-            <p className="text-xs sm:text-sm md:text-[14px] font-semibold tracking-[0.28em] uppercase text-neutral-400 leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-[14px] font-bold tracking-[0.28em] uppercase text-black dark:text-white leading-relaxed drop-shadow-sm">
               SECURE TODAY.<br />
               TRUST TOMORROW.
             </p>
@@ -237,7 +241,7 @@ export default function HeroSection() {
                   duration: 0.75,
                   ease: easeCustom,
                 }}
-                className="font-[900] uppercase text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-md"
+                className="font-[900] uppercase text-black dark:text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-sm"
                 style={{
                   fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
                   lineHeight: 0.86,
@@ -255,7 +259,7 @@ export default function HeroSection() {
                   duration: 0.75,
                   ease: easeCustom,
                 }}
-                className="font-[900] uppercase text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-md"
+                className="font-[900] uppercase text-black dark:text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-sm"
                 style={{
                   fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
                   lineHeight: 0.86,
@@ -273,13 +277,13 @@ export default function HeroSection() {
             initial="initial"
             animate="animate"
           >
-            <p className="text-xs sm:text-sm md:text-[14px] font-semibold tracking-[0.26em] uppercase text-neutral-300 leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-[14px] font-bold tracking-[0.26em] uppercase text-black dark:text-white leading-relaxed drop-shadow-sm">
               NEXT-GEN DIGITAL SIGNATURE<br />
               SECURITY & VERIFICATION
             </p>
           </motion.div>
 
-          {/* Glowing Dark Pill CTA Button: GET STARTED ↗ */}
+          {/* Glowing CTA Button: GET STARTED ↗ */}
           <motion.div
             custom={5}
             variants={fadeUp}
@@ -289,7 +293,7 @@ export default function HeroSection() {
           >
             <a
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-[#141416] text-[#c084fc] font-bold text-sm sm:text-base tracking-[0.22em] uppercase border border-[#a855f7]/30 shadow-[0_0_25px_rgba(168,85,247,0.32)] hover:shadow-[0_0_40px_rgba(168,85,247,0.55)] hover:border-[#c084fc]/50 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 no-underline"
+              className="inline-flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-black text-white hover:bg-neutral-800 dark:bg-[#141416] dark:text-[#c084fc] font-bold text-sm sm:text-base tracking-[0.22em] uppercase border border-black/20 dark:border-[#a855f7]/30 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_25px_rgba(0,0,0,0.25)] dark:shadow-[0_0_25px_rgba(168,85,247,0.32)] dark:hover:shadow-[0_0_40px_rgba(168,85,247,0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 no-underline"
               title="Get Started — Go to Dashboard"
             >
               <span>GET STARTED</span>
