@@ -10,6 +10,7 @@ from app.services import (
     threat_engine,
     quantum_analysis,
     explainable_verification,
+    signature_timeline,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "threat_engine",
     "quantum_analysis",
     "explainable_verification",
+    "signature_timeline",
 ]

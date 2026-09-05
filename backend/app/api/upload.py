@@ -29,6 +29,7 @@ from app.services import (
     threat_engine,
     quantum_analysis,
     explainable_verification,
+    signature_timeline,
 )
 
 
@@ -236,7 +237,42 @@ async def analyze_pdf(
     dup_result["is_duplicate"] = is_duplicate
     dup_result["match_type"] = match_type
 
-    # ── 12. Explainable Verification (Deterministic rule-based explanation) ───
+    # ── 12. Signature Timeline & Multi-Signature Analysis ──────────────────────
+    if is_pdf:
+        try:
+            sig_timeline = await asyncio.to_thread(
+                signature_timeline.analyze_signature_timeline,
+                pdf_bytes=pdf_bytes,
+                sig_result=sig_result,
+                cert_info=cert_info,
+                integrity_result=integrity_result,
+                pdf_structure=pdf_structure,
+            )
+        except Exception as exc:
+            logger.error("Signature timeline analysis failed: %s", exc)
+            sig_timeline = {
+                "total_signature_fields": sig_result.get("count", 0),
+                "total_signed_signatures": len(sig_result.get("signatures", [])),
+                "revision_count": pdf_structure.get("incremental_update_count", 0) + 1,
+                "timeline_status": "ERROR",
+                "consistency_status": "UNKNOWN",
+                "timeline_order_confidence": "LOW",
+                "signatures": [],
+                "findings": [],
+            }
+    else:
+        sig_timeline = {
+            "total_signature_fields": 0,
+            "total_signed_signatures": 0,
+            "revision_count": None,
+            "timeline_status": "NOT_AVAILABLE",
+            "consistency_status": "UNKNOWN",
+            "timeline_order_confidence": "HIGH",
+            "signatures": [],
+            "findings": [],
+        }
+
+    # ── 13. Explainable Verification (Deterministic rule-based explanation) ───
     evidence = explainable_verification.extract_evidence_from_analysis(
         sig_result=sig_result,
         cert_info=cert_info,
@@ -246,10 +282,11 @@ async def analyze_pdf(
         threat_result=threat_result,
         quantum_result=q_result,
         cert_inspection=cert_inspection,
+        signature_timeline=sig_timeline,
     )
     explanation_res = explainable_verification.generate_explanation(evidence, verdict)
 
-    # ── 13. Assemble result ────────────────────────────────────────────────────
+    # ── 14. Assemble result ────────────────────────────────────────────────────
     now = datetime.now(timezone.utc)
 
     full_result: dict[str, Any] = {
@@ -307,6 +344,7 @@ async def analyze_pdf(
         "created_at": now.isoformat(),
         "explainable_verification": explanation_res.model_dump(),
         "certificate_inspection": cert_inspection,
+        "signature_timeline": sig_timeline,
     }
 
 

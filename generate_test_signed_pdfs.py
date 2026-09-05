@@ -220,6 +220,108 @@ def generate_signed_pdf(
     
     print(f"  [OK] Created: {output_path} ({len(signed_bytes)} bytes)\n")
 
+
+def generate_multi_signed_pdf(
+    output_path: str,
+    signer1_cn: str,
+    signer1_org: str,
+    signer2_cn: str,
+    signer2_org: str,
+    add_empty_field: bool = False,
+):
+    print(f"Generating Multi-Signed PDF: {os.path.basename(output_path)} ...")
+    body = [
+        f"Document ID: QT-MULTI-{os.path.basename(output_path).replace('.pdf','').upper()}",
+        f"Primary Signer: {signer1_cn} ({signer1_org})",
+        f"Secondary Signer: {signer2_cn} ({signer2_org})",
+        f"Timestamp: {datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        "",
+        "## Dual-Party Authorization & Workflow Agreement",
+        "This multi-party agreement is signed across sequential revisions using PAdES digital signatures.",
+        "Both parties attest to the veracity and authenticity of the enclosed transaction payload.",
+        "",
+        "## Revision History Specification",
+        "- Revision 1: Signed by Initial Approval Authority",
+        "- Revision 2: Counter-signed via Legitimate Incremental Update by Second Authority",
+        "- Structure: ByteRanges exclude signature /Contents placeholders cleanly",
+    ]
+
+    base_pdf_buf = create_base_pdf(
+        title="DUAL-AUTHORIZED MULTI-SIGNATURE CERTIFICATE",
+        body_lines=body
+    )
+
+    # 1. Signer 1
+    key1 = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    subject1 = issuer1 = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, 'US'),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, signer1_org),
+        x509.NameAttribute(NameOID.COMMON_NAME, signer1_cn),
+    ])
+    cert1 = x509.CertificateBuilder().subject_name(subject1).issuer_name(issuer1).public_key(key1.public_key()).serial_number(x509.random_serial_number()).not_valid_before(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)).sign(key1, hashes.SHA256())
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as cf1, tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as kf1:
+        cf1.write(cert1.public_bytes(serialization.Encoding.PEM))
+        kf1.write(key1.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()))
+        c1_path, k1_path = cf1.name, kf1.name
+    s1 = signers.SimpleSigner.load(key_file=k1_path, cert_file=c1_path)
+    os.unlink(c1_path); os.unlink(k1_path)
+
+    w1 = IncrementalPdfFileWriter(base_pdf_buf)
+    fields.append_signature_field(w1, fields.SigFieldSpec('Signature_PrimaryAuthority_1', box=(50, 95, 270, 140)))
+    if add_empty_field:
+        fields.append_signature_field(w1, fields.SigFieldSpec('Signature_PendingApproval_3', box=(300, 45, 520, 90)))
+
+    out1 = io.BytesIO()
+    signers.sign_pdf(
+        w1,
+        signers.PdfSignatureMetadata(
+            field_name='Signature_PrimaryAuthority_1',
+            reason='Initial Document Certification & Authorization',
+            location='San Francisco, CA',
+            contact_info='sec-lead@quantumtrust.org'
+        ),
+        signer=s1,
+        output=out1
+    )
+
+    # 2. Signer 2 (Incremental Co-Signer)
+    key2 = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    subject2 = issuer2 = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, 'US'),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, signer2_org),
+        x509.NameAttribute(NameOID.COMMON_NAME, signer2_cn),
+    ])
+    cert2 = x509.CertificateBuilder().subject_name(subject2).issuer_name(issuer2).public_key(key2.public_key()).serial_number(x509.random_serial_number()).not_valid_before(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)).sign(key2, hashes.SHA256())
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as cf2, tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as kf2:
+        cf2.write(cert2.public_bytes(serialization.Encoding.PEM))
+        kf2.write(key2.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()))
+        c2_path, k2_path = cf2.name, kf2.name
+    s2 = signers.SimpleSigner.load(key_file=k2_path, cert_file=c2_path)
+    os.unlink(c2_path); os.unlink(k2_path)
+
+    w2 = IncrementalPdfFileWriter(io.BytesIO(out1.getvalue()))
+    fields.append_signature_field(w2, fields.SigFieldSpec('Signature_SecondaryCoSigner_2', box=(300, 95, 520, 140)))
+    out2 = io.BytesIO()
+    signers.sign_pdf(
+        w2,
+        signers.PdfSignatureMetadata(
+            field_name='Signature_SecondaryCoSigner_2',
+            reason='Counter-Signature & Risk Management Approval',
+            location='Zurich, Switzerland',
+            contact_info='audit@quantumtrust.ch'
+        ),
+        signer=s2,
+        output=out2
+    )
+
+    final_bytes = out2.getvalue()
+    with open(output_path, "wb") as f:
+        f.write(final_bytes)
+    print(f"  [OK] Created: {output_path} ({len(final_bytes)} bytes)\n")
+
+
 if __name__ == "__main__":
     root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -248,6 +350,28 @@ if __name__ == "__main__":
         subject_cn="Legacy Signer CA",
         org_name="Old Security Authority",
         is_expired=True
+    )
+
+    # 4. Multi-signed valid PDF (2 valid signatures across incremental updates)
+    multisig_valid_pdf = os.path.join(root_dir, "demo_multisig_valid_signed_document.pdf")
+    generate_multi_signed_pdf(
+        multisig_valid_pdf,
+        signer1_cn="Alice Smith (CISO)",
+        signer1_org="QuantumTrust Global Security Inc.",
+        signer2_cn="Dr. Bob Vance (VP Engineering)",
+        signer2_org="QuantumTrust Enterprise Labs",
+        add_empty_field=False
+    )
+
+    # 5. Multi-signed PDF with empty pending field
+    multisig_empty_field_pdf = os.path.join(root_dir, "demo_multisig_with_empty_field.pdf")
+    generate_multi_signed_pdf(
+        multisig_empty_field_pdf,
+        signer1_cn="Director Sarah Connor",
+        signer1_org="QuantumTrust Defense Authority",
+        signer2_cn="Chief Auditor John Smith",
+        signer2_org="Independent Trust Auditor Corp",
+        add_empty_field=True
     )
 
     print("All demo test PDFs created successfully in project root!")

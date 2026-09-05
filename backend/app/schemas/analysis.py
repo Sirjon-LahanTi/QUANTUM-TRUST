@@ -192,6 +192,77 @@ class CertificateInspectionResult(BaseModel):
     findings: list[FindingItem | dict[str, Any]] = Field(default_factory=list)
 
 
+class TimelineFinding(BaseModel):
+    code: str
+    severity: str  # INFO, LOW, MEDIUM, HIGH, CRITICAL
+    title: str
+    description: str
+    signature_id: str | None = None
+    evidence: dict[str, Any] | None = None
+
+
+class SignerInfo(BaseModel):
+    common_name: str | None = None
+    organization: str | None = None
+    email: str | None = None
+    raw_dn: str | None = None
+
+
+class SigningTimeInfo(BaseModel):
+    value: str | None = None
+    source: str | None = None  # CMS_SIGNING_TIME, PDF_SIGNATURE_DATE, TRUSTED_TIMESTAMP, UNKNOWN
+    consistency: str | None = "CONSISTENT"  # CONSISTENT, CONFLICT, UNKNOWN
+
+
+class ByteRangeInfo(BaseModel):
+    ranges: list[int] | None = None
+    covered_length: int | None = None
+    coverage_status: str = "UNKNOWN"  # VALID, INVALID, UNKNOWN
+    excludes_contents_placeholder: bool | None = None
+
+
+class RevisionInfo(BaseModel):
+    revision_number: int | None = None
+    total_revisions: int | None = None
+    covers_revision: int | None = None
+    is_latest_revision: bool | None = None
+
+
+class VerificationSummary(BaseModel):
+    signature_valid: bool | None = None
+    integrity_verified: bool | None = None
+    certificate_valid: bool | None = None
+    certificate_trusted: bool | None = None
+
+
+class SignatureTimelineEntry(BaseModel):
+    signature_id: str
+    field_name: str
+    sequence_number: int
+    signer: SignerInfo | dict[str, Any] | None = None
+    signing_time: SigningTimeInfo | dict[str, Any] | None = None
+    signature_algorithm: str | None = None
+    digest_algorithm: str | None = None
+    certificate_fingerprint: str | None = None
+    byte_range: ByteRangeInfo | dict[str, Any] | None = None
+    revision: RevisionInfo | dict[str, Any] | None = None
+    verification: VerificationSummary | dict[str, Any] | None = None
+    status: str = "NOT_CHECKED"  # VALID, INVALID, SUSPICIOUS, NOT_CHECKED, UNSUPPORTED
+    post_signature_change: str | None = None
+    findings: list[TimelineFinding | dict[str, Any]] = Field(default_factory=list)
+
+
+class SignatureTimelineResult(BaseModel):
+    total_signature_fields: int = 0
+    total_signed_signatures: int = 0
+    revision_count: int | None = None
+    timeline_status: str = "NOT_AVAILABLE"  # ANALYZED, NOT_AVAILABLE, NO_SIGNATURES, ERROR
+    consistency_status: str = "UNKNOWN"      # CONSISTENT, INCONSISTENT, PARTIAL, UNKNOWN
+    timeline_order_confidence: str = "HIGH"  # HIGH, MEDIUM, LOW
+    signatures: list[SignatureTimelineEntry | dict[str, Any]] = Field(default_factory=list)
+    findings: list[TimelineFinding | dict[str, Any]] = Field(default_factory=list)
+
+
 class AnalysisResult(BaseModel):
     analysis_id: str
     document: DocumentInfo
@@ -205,6 +276,7 @@ class AnalysisResult(BaseModel):
     created_at: str | None = None
     explainable_verification: ExplanationResult | None = None
     certificate_inspection: CertificateInspectionResult | None = None
+    signature_timeline: SignatureTimelineResult | None = None
 
 
 class AnalysisSummary(BaseModel):

@@ -192,6 +192,69 @@ import Navigation from '../../components/Navigation.astro';
       </div>
     </div>
 
+    <!-- SIGNATURE TIMELINE & REVISION HISTORY -->
+    <div class="section" id="sig-timeline-section" style="margin-top: var(--space-6);">
+      <div class="card" style="border-top: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span class="section-title" style="margin: 0; font-size: 0.875rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
+              SIGNATURE TIMELINE &amp; REVISION HISTORY
+            </span>
+            <span class="badge badge--neutral" id="tl-consistency-badge">CONSISTENCY: —</span>
+            <span class="badge badge--neutral" id="tl-order-confidence-badge">ORDER CONFIDENCE: —</span>
+            <span class="badge badge--neutral" id="tl-stats-badge">0 SIGNATURES</span>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            PDF INCREMENTAL REVISION AUDIT
+          </span>
+        </div>
+
+        <!-- Timeline Overview Strip / Metrics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">SIGNATURE FIELDS</div>
+            <div style="font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="tl-fields-count">—</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">SIGNED SIGNATURES</div>
+            <div style="font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="tl-signed-count">—</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">PDF REVISIONS</div>
+            <div style="font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="tl-revisions-count">—</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">TIMELINE INTEGRITY</div>
+            <div style="font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="tl-status-val">—</div>
+          </div>
+        </div>
+
+        <!-- Vertical Timeline Container -->
+        <div id="timeline-tree-container" style="margin-bottom: var(--space-4);">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Timeline Findings Container -->
+        <div id="timeline-findings-container" style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-3);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+            TIMELINE &amp; REVISION FINDINGS
+          </div>
+          <div id="timeline-findings-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <!-- Informational footer note -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); margin-top: var(--space-2);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            Standard Notice: PDFs legitimately support multiple signatures across incremental revisions; multiple signatures do not signify tampering unless signed byte ranges are violated.
+          </span>
+          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">ISO 32000-1 / PAdES</span>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Certificate & Public Key Inspector -->
     <div class="section" id="cert-inspector-section" style="margin-top: var(--space-6);">
       <div class="card" style="border-top: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
@@ -606,6 +669,9 @@ import Navigation from '../../components/Navigation.astro';
       ['Match Type',   matchType],
     ]);
 
+    // ── Signature Timeline & Revision History ──────────────────────────────
+    renderSignatureTimeline(r);
+
     // ── Certificate & Public Key Inspector ─────────────────────────────────────
     renderCertificateInspector(r);
 
@@ -614,6 +680,208 @@ import Navigation from '../../components/Navigation.astro';
       const secLink = document.getElementById('security-link') as HTMLAnchorElement;
       secLink.href = `/security?id=${r.analysis_id}`;
       secLink.style.display = 'inline-flex';
+    }
+  }
+
+  function renderSignatureTimeline(r: any) {
+    const tl = r.signature_timeline ?? {};
+    const sigs = tl.signatures ?? [];
+    const findings = tl.findings ?? [];
+    const totalFields = tl.total_signature_fields ?? (r.signature?.count ?? 0);
+    const totalSigned = tl.total_signed_signatures ?? (sigs.length || (r.signature?.present ? 1 : 0));
+    const revCount = tl.revision_count ?? 1;
+    const consistency = (tl.consistency_status ?? 'UNKNOWN').toUpperCase();
+    const orderConf = (tl.timeline_order_confidence ?? 'HIGH').toUpperCase();
+
+    // Badges
+    const consClass = consistency === 'CONSISTENT' ? 'ok' : consistency === 'INCONSISTENT' ? 'danger' : 'warn';
+    const consBadge = document.getElementById('tl-consistency-badge');
+    if (consBadge) {
+      consBadge.className = `badge badge--${consClass}`;
+      consBadge.textContent = `CONSISTENCY: ${consistency}`;
+    }
+
+    const confClass = orderConf === 'HIGH' ? 'ok' : orderConf === 'MEDIUM' ? 'warn' : 'neutral';
+    const confBadge = document.getElementById('tl-order-confidence-badge');
+    if (confBadge) {
+      confBadge.className = `badge badge--${confClass}`;
+      confBadge.textContent = `ORDER CONFIDENCE: ${orderConf}`;
+    }
+
+    const statsBadge = document.getElementById('tl-stats-badge');
+    if (statsBadge) {
+      statsBadge.textContent = `${totalSigned} OF ${totalFields} SIGNED`;
+    }
+
+    // Metric cards
+    const fieldsCountEl = document.getElementById('tl-fields-count');
+    if (fieldsCountEl) fieldsCountEl.textContent = `${totalFields} Field${totalFields === 1 ? '' : 's'}`;
+
+    const signedCountEl = document.getElementById('tl-signed-count');
+    if (signedCountEl) signedCountEl.textContent = `${totalSigned} Signature${totalSigned === 1 ? '' : 's'}`;
+
+    const revCountEl = document.getElementById('tl-revisions-count');
+    if (revCountEl) revCountEl.textContent = `${revCount} Revision${revCount === 1 ? '' : 's'}`;
+
+    const statusValEl = document.getElementById('tl-status-val');
+    if (statusValEl) {
+      statusValEl.textContent = consistency;
+      statusValEl.style.color = consistency === 'CONSISTENT' ? 'var(--ok)' : consistency === 'INCONSISTENT' ? 'var(--danger)' : 'var(--warn)';
+    }
+
+    // Tree container
+    const treeContainer = document.getElementById('timeline-tree-container');
+    if (treeContainer) {
+      if (sigs.length === 0) {
+        if (r.signature?.present === false) {
+          treeContainer.innerHTML = `
+            <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); text-align: center; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs);">
+              No digital signatures or signature fields detected in this document.
+            </div>
+          `;
+        } else {
+          treeContainer.innerHTML = `
+            <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs);">
+              Single signature detected in primary verification stream (Revision 1 of ${revCount}).
+            </div>
+          `;
+        }
+      } else {
+        let html = '<div style="display: flex; flex-direction: column; gap: 0;">';
+
+        sigs.forEach((sig: any, index: number) => {
+          const seq = sig.sequence_number ?? (index + 1);
+          const status = (sig.status ?? 'NOT_CHECKED').toUpperCase();
+          const statusBadgeClass = status === 'VALID' ? 'ok' : status === 'INVALID' ? 'danger' : 'warn';
+          const signerName = sig.signer?.common_name || 'Signer Identity Unspecified';
+          const signerOrg = sig.signer?.organization || 'Organization Unspecified';
+          const rawTime = sig.signing_time?.value;
+          const timeSource = sig.signing_time?.source || 'UNKNOWN';
+          const formattedTime = rawTime ? new Date(rawTime).toUTCString().replace('GMT', 'UTC') : 'No timestamp recorded';
+          const rev = sig.revision?.covers_revision ?? (sig.revision?.revision_number ?? seq);
+          const totalRevs = sig.revision?.total_revisions ?? revCount;
+          const isLatest = sig.revision?.is_latest_revision === true;
+          const brRanges = sig.byte_range?.ranges ? `[${sig.byte_range.ranges.join(', ')}]` : 'N/A';
+          const brLen = sig.byte_range?.covered_length ? formatBytes(sig.byte_range.covered_length) : '—';
+          const postChange = sig.post_signature_change ?? 'NONE';
+
+          html += `
+            <!-- Signature Node ${seq} -->
+            <div style="background: var(--bg-raised); border: 1px solid var(--border); border-left: 3px solid ${status === 'VALID' ? 'var(--ok)' : status === 'INVALID' ? 'var(--danger)' : 'var(--warn)'}; border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-2);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-3); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-2);">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">
+                    ● SIGNATURE #${seq}
+                  </span>
+                  <span class="badge badge--neutral" style="font-size: 0.6875rem;">Field: ${sig.field_name}</span>
+                  <span class="badge badge--neutral" style="font-size: 0.6875rem;">Revision ${rev} of ${totalRevs}</span>
+                  ${isLatest ? '<span class="badge badge--accent" style="font-size: 0.6875rem;">Latest Revision</span>' : ''}
+                </div>
+                <span class="badge badge--${statusBadgeClass}" style="font-size: 0.75rem;">
+                  ${status === 'VALID' ? '✅ VALID' : status === 'INVALID' ? '✕ INVALID' : '⚠ ' + status}
+                </span>
+              </div>
+
+              <!-- Signature Metadata Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs);">
+                <div>
+                  <div style="color: var(--text-secondary); font-size: 0.6875rem;">SIGNER &amp; AUTHORITY</div>
+                  <div style="color: var(--text-primary); font-weight: 600; margin-top: 2px;">${signerName}</div>
+                  <div style="color: var(--text-muted); font-size: 0.6875rem;">${signerOrg}</div>
+                </div>
+
+                <div>
+                  <div style="color: var(--text-secondary); font-size: 0.6875rem;">TIMESTAMP &amp; SOURCE</div>
+                  <div style="color: var(--text-primary); margin-top: 2px;">${formattedTime}</div>
+                  <div style="color: var(--text-muted); font-size: 0.6875rem;">Source: ${timeSource}</div>
+                </div>
+
+                <div>
+                  <div style="color: var(--text-secondary); font-size: 0.6875rem;">ALGORITHMS</div>
+                  <div style="color: var(--text-primary); margin-top: 2px;">${sig.digest_algorithm || 'SHA-256'} / ${sig.signature_algorithm || 'RSA'}</div>
+                  <div style="color: var(--text-muted); font-size: 0.6875rem;">Cert: ${sig.certificate_fingerprint ? sig.certificate_fingerprint.slice(0, 16) + '…' : 'Present'}</div>
+                </div>
+
+                <div>
+                  <div style="color: var(--text-secondary); font-size: 0.6875rem;">BYTERANGE &amp; COVERAGE</div>
+                  <div style="color: var(--text-primary); margin-top: 2px;">${brRanges}</div>
+                  <div style="color: var(--text-muted); font-size: 0.6875rem;">Covered: ${brLen} (${sig.byte_range?.coverage_status || 'VALID'})</div>
+                </div>
+              </div>
+
+              <!-- Post-Signature Status Callout -->
+              <div style="margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; color: ${postChange === 'LEGITIMATE_INCREMENTAL_UPDATE' ? 'var(--ok)' : postChange === 'UNAUTHORIZED_SIGNED_CONTENT_CHANGE' ? 'var(--danger)' : 'var(--text-secondary)'};">
+                  ${postChange === 'LEGITIMATE_INCREMENTAL_UPDATE'
+                    ? '✓ Legitimate Incremental Update: Subsequent revisions appended safely without modifying this signed byte range.'
+                    : postChange === 'UNAUTHORIZED_SIGNED_CONTENT_CHANGE'
+                    ? '✕ Unauthorized Modification: Content within this signed revision was altered or corrupted.'
+                    : '🔵 Signature covers the latest revision of the document.'}
+                </span>
+                <span class="badge badge--neutral" style="font-size: 0.625rem;">Coverage: ${sig.byte_range?.coverage_status || 'VALID'}</span>
+              </div>
+            </div>
+          `;
+
+          // If not the last signature, show connector
+          if (index < sigs.length - 1) {
+            html += `
+              <div style="display: flex; flex-direction: column; align-items: center; margin: 4px 0 8px 0;">
+                <div style="width: 2px; height: 14px; background: var(--border);"></div>
+                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 0.625rem; color: var(--text-secondary);">
+                  <span>↓</span>
+                  <span>Incremental Update (Appends Revision ${index + 2})</span>
+                </div>
+                <div style="width: 2px; height: 14px; background: var(--border);"></div>
+              </div>
+            `;
+          }
+        });
+
+        // Terminal Node: Current Document State
+        html += `
+          <div style="display: flex; flex-direction: column; align-items: center; margin: 4px 0 8px 0;">
+            <div style="width: 2px; height: 14px; background: var(--border);"></div>
+          </div>
+          <div style="background: var(--bg-surface); border: 1px dashed var(--border); border-radius: 4px; padding: var(--space-3); display: flex; align-items: center; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--accent);">●</span>
+              <span style="color: var(--text-primary); font-weight: 600;">CURRENT DOCUMENT ROOT (Revision ${revCount})</span>
+            </div>
+            <span class="badge badge--neutral" style="font-size: 0.625rem;">Total Size: ${formatBytes(r.document?.file_size || 0)}</span>
+          </div>
+        `;
+
+        html += '</div>';
+        treeContainer.innerHTML = html;
+      }
+    }
+
+    // Findings List
+    const findingsList = document.getElementById('timeline-findings-list');
+    if (findingsList) {
+      if (!findings || findings.length === 0) {
+        findingsList.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--ok); padding: 8px 0;">
+            <span>✓</span>
+            <span>Timeline structure and revision sequence are consistent without anomalies.</span>
+          </div>
+        `;
+      } else {
+        findingsList.innerHTML = findings.map((f: any) => {
+          const sev = (f.severity || 'INFO').toUpperCase();
+          const sevBadge = sev === 'CRITICAL' || sev === 'HIGH' ? 'danger' : sev === 'MEDIUM' ? 'warn' : 'neutral';
+          return `
+            <div style="padding: 6px 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-primary);">${f.title}</span>
+                <span class="badge badge--${sevBadge}" style="font-size: 0.625rem;">${sev}</span>
+              </div>
+              <div style="font-size: 0.6875rem; color: var(--text-secondary); line-height: 1.4;">${f.description}</div>
+            </div>
+          `;
+        }).join('');
+      }
     }
   }
 

@@ -131,6 +131,7 @@ class VerificationEvidence:
     quantum_analysis: dict[str, Any] | None = None
     signatures_detail: list[dict[str, Any]] = field(default_factory=list)
     certificate_inspection: dict[str, Any] | None = None
+    signature_timeline: dict[str, Any] | None = None
 
 
 # ── Evidence Extractor from Subsystem Dictionaries ───────────────────────────
@@ -144,6 +145,7 @@ def extract_evidence_from_analysis(
     threat_result: dict[str, Any],
     quantum_result: dict[str, Any] | None = None,
     cert_inspection: dict[str, Any] | None = None,
+    signature_timeline: dict[str, Any] | None = None,
 ) -> VerificationEvidence:
     """
     Constructs normalized VerificationEvidence from raw backend sub-system outputs.
@@ -281,6 +283,7 @@ def extract_evidence_from_analysis(
         quantum_analysis=quantum_result,
         signatures_detail=sig_result.get("signatures", []),
         certificate_inspection=cert_inspection,
+        signature_timeline=signature_timeline,
     )
 
 
@@ -739,8 +742,84 @@ def generate_explanation(
 
     step_order += 1
 
-    # ── Multi-Signature Evidence (if applicable) ──────────────────────────────
-    if evidence.signature_count > 1 and evidence.signatures_detail:
+    # ── Step 7: Signature Timeline & Revision History ─────────────────────────
+    if evidence.signature_timeline and evidence.signature_timeline.get("timeline_status") == "ANALYZED":
+        tl = evidence.signature_timeline
+        tl_consistency = tl.get("consistency_status", "UNKNOWN")
+        total_fields = tl.get("total_signature_fields", 0)
+        total_signed = tl.get("total_signed_signatures", 0)
+        rev_count = tl.get("revision_count", 1)
+        sig_list = tl.get("signatures", [])
+
+        if tl_consistency == "CONSISTENT":
+            tl_step_status = StepStatus.PASS.value
+            tl_obs = f"Consistent ({total_signed} signed / {rev_count} revs)"
+            if total_signed > 1:
+                tl_exp = f"All {total_signed} digital signatures across {rev_count} document revisions are cryptographically valid and consistent with incremental update history."
+            else:
+                tl_exp = f"Digital signature is cryptographically valid for Revision 1 of {rev_count} and matches its ByteRange specification."
+        elif tl_consistency == "INCONSISTENT":
+            tl_step_status = StepStatus.FAIL.value
+            tl_obs = f"Inconsistent / Tampered ({total_signed} signed)"
+            tl_exp = "Signature timeline analysis detected unauthorized modifications, invalid ByteRanges, or cryptographic failures in one or more signed revisions."
+        else:
+            tl_step_status = StepStatus.WARNING.value
+            tl_obs = f"Partial / Unverified ({total_signed} signed)"
+            tl_exp = "Signature timeline contains unverified, self-signed, or inconclusive signature states."
+
+        steps.append(VerificationStep(
+            id="signature_timeline",
+            order=step_order,
+            check="Signature timeline & revision consistency",
+            status=tl_step_status,
+            observed_value=tl_obs,
+            expected_condition="All signatures cryptographically valid and consistent with revision sequence",
+            explanation=tl_exp,
+            technical_detail=f"ByteRange coverage verified across {rev_count} revisions; order confidence: {tl.get('timeline_order_confidence', 'HIGH')}.",
+        ))
+
+        evidence_items.append(EvidenceItem(
+            code="TIMELINE_CONSISTENCY",
+            category=EvidenceCategory.SIGNATURE.value,
+            status=EvidenceStatus.PASS.value if tl_consistency == "CONSISTENT" else (
+                EvidenceStatus.FAIL.value if tl_consistency == "INCONSISTENT" else EvidenceStatus.WARNING.value
+            ),
+            title="Signature Timeline Consistency",
+            value=tl_consistency,
+            reason=tl_exp,
+        ))
+
+        # Add individual signature entries to evidence
+        for sig_entry in sig_list:
+            seq = sig_entry.get("sequence_number", 1)
+            f_name = sig_entry.get("field_name", f"Signature{seq}")
+            st = sig_entry.get("status", "UNKNOWN")
+            signer_cn = sig_entry.get("signer", {}).get("common_name") or "Unknown Signer"
+            rev_num = sig_entry.get("revision", {}).get("covers_revision") or seq
+            post_chg = sig_entry.get("post_signature_change", "NONE")
+
+            item_stat = (
+                EvidenceStatus.PASS.value if st == "VALID" else (
+                    EvidenceStatus.FAIL.value if st in ("INVALID", "CORRUPTED") else EvidenceStatus.WARNING.value
+                )
+            )
+
+            reason_desc = f"Signature #{seq} by {signer_cn} covers Revision {rev_num} (Status: {st})."
+            if post_chg == "LEGITIMATE_INCREMENTAL_UPDATE":
+                reason_desc += " Later incremental updates did not modify earlier signed content."
+            elif post_chg == "UNAUTHORIZED_SIGNED_CONTENT_CHANGE":
+                reason_desc += " WARNING: Signed content was altered by subsequent modifications."
+
+            evidence_items.append(EvidenceItem(
+                code=f"TIMELINE_SIG_{seq}",
+                category=EvidenceCategory.SIGNATURE.value,
+                status=item_stat,
+                title=f"Signature #{seq} ({f_name})",
+                value=f"{st} • Rev {rev_num}",
+                reason=reason_desc,
+            ))
+
+    elif evidence.signature_count > 1 and evidence.signatures_detail:
         for idx, sig_detail in enumerate(evidence.signatures_detail, start=1):
             fname = sig_detail.get("field_name") or f"Signature #{idx}"
             s_status = sig_detail.get("status") or "UNKNOWN"
@@ -762,7 +841,9 @@ def generate_explanation(
                 ),
             ))
 
-    # ── Step 7: Quantum-Inspired Simulation Analysis (Secondary Signal) ───────
+    step_order += 1
+
+    # ── Step 8: Quantum-Inspired Simulation Analysis (Secondary Signal) ───────
     if evidence.quantum_analysis and isinstance(evidence.quantum_analysis, dict):
         q = evidence.quantum_analysis
         sim_val = q.get("state_similarity")
