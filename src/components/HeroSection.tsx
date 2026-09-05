@@ -82,7 +82,7 @@ export default function HeroSection() {
           loop
           muted
           playsInline
-          className="absolute w-[95%] h-[95%] max-w-none top-[2.5%] left-[-12%] md:left-[-7%] lg:left-[-2%] object-cover pointer-events-none transition-all duration-700"
+          className="absolute w-[95%] h-[95%] max-w-none top-[2.5%] left-[-15%] md:left-[-10%] lg:left-[-5%] object-cover pointer-events-none transition-all duration-700"
           style={{
             filter: isDark
               ? 'brightness(0.85) contrast(1.1) saturate(1.05)'
