@@ -312,6 +312,42 @@ class SignatureTimelineResult(BaseModel):
     signatures: list[SignatureTimelineEntry | dict[str, Any]] = Field(default_factory=list)
 
 
+class AffectedItem(BaseModel):
+    location_type: str = "UNKNOWN"        # PAGE, OBJECT, JSON_PATH, XML_XPATH, XML_ELEMENT, DOCUMENT_PART, PARAGRAPH, TABLE_CELL, BYTE_RANGE, SIGNATURE_CONTAINER, METADATA
+    location: str                         # Human-readable location description
+    structural_path: str | None = None
+    page: int | None = None
+    object_id: str | int | None = None
+    element_name: str | None = None
+    json_path: str | None = None
+    xml_xpath: str | None = None
+    document_part: str | None = None
+    paragraph: int | str | None = None
+    table: str | None = None
+    cell: str | None = None
+    range: str | None = None
+    byte_range: list[int] | None = None
+    before_value: Any | None = None
+    after_value: Any | None = None
+    change_type: str = "UNKNOWN_CHANGE"   # VALUE_CHANGED, ELEMENT_CHANGED, FIELD_CHANGED, OBJECT_CHANGED, CONTENT_CHANGED, TEXT_CHANGED, INSERTED, DELETED, MOVED, FORMULA_CHANGED, ANNOTATION_CHANGED, METADATA_CHANGED, STRUCTURE_CHANGED, BYTES_MODIFIED, SIGNATURE_CONTAINER_CHANGED, BYTE_RANGE_CHANGED, REFERENCE_DIGEST_MISMATCH, UNKNOWN_CHANGE
+    evidence: list[str] = Field(default_factory=list)
+    localization_confidence: str = "UNKNOWN"  # HIGH, MEDIUM, LOW, UNKNOWN
+
+
+class TamperingLocalizationResult(BaseModel):
+    status: str = "NOT_AVAILABLE"            # LOCALIZED, NOT_LOCALIZED, NOT_AVAILABLE, NO_TAMPERING_DETECTED, ERROR
+    localization_level: str = "NOT_AVAILABLE" # NONE, FILE_LEVEL, BYTE_LEVEL, STRUCTURAL, PAGE_LEVEL, OBJECT_LEVEL, ELEMENT_LEVEL, FIELD_LEVEL, REGION_LEVEL, UNKNOWN, NOT_AVAILABLE
+    tampering_detected: bool = False
+    confidence: str = "UNKNOWN"              # HIGH, MEDIUM, LOW, UNKNOWN
+    comparison_source: str = "NO_TRUSTED_BASELINE" # EARLIER_SIGNED_REVISION, SIGNED_PAYLOAD_REFERENCE, DIGEST_REFERENCE, INCREMENTAL_REVISION_DIFF, PACKAGE_PARTS, USER_PROVIDED_REFERENCE, NO_TRUSTED_BASELINE
+    affected_revision: str | None = None
+    affected_signature: str | None = None
+    affected_items: list[AffectedItem] = Field(default_factory=list)
+    findings: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    summary: str | None = None
+
+
 class AnalysisResult(BaseModel):
     analysis_id: str
     document: DocumentInfo
@@ -326,6 +362,8 @@ class AnalysisResult(BaseModel):
     explainable_verification: ExplanationResult | None = None
     certificate_inspection: CertificateInspectionResult | None = None
     signature_timeline: SignatureTimelineResult | None = None
+    tampering_localization: TamperingLocalizationResult | None = None
+
 
 
 class AnalysisSummary(BaseModel):

@@ -180,9 +180,86 @@ const { id } = Astro.params;
       </div>
     </div>
 
+    <!-- TAMPERING LOCALIZATION -->
+    <div class="section" id="tampering-localization-section" style="margin-top: var(--space-6);">
+      <div class="card" style="border-top: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span class="section-title" style="margin: 0; font-size: 0.875rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
+              TAMPERING LOCALIZATION
+            </span>
+            <span class="badge badge--neutral" id="loc-status-badge">STATUS: —</span>
+            <span class="badge badge--neutral" id="loc-level-badge">LEVEL: —</span>
+            <span class="badge badge--neutral" id="loc-confidence-badge">CONFIDENCE: —</span>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            FORMAT-AWARE STRUCTURAL LOCALIZATION
+          </span>
+        </div>
+
+        <!-- Metrics Strip -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4);">
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">TAMPERING STATUS</div>
+            <div style="font-size: var(--text-base); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="loc-status-val">—</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">LOCALIZATION LEVEL</div>
+            <div style="font-size: var(--text-base); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="loc-level-val">—</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">AFFECTED LOCATIONS</div>
+            <div style="font-size: var(--text-base); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="loc-count-val">0</div>
+          </div>
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-3);">
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;">COMPARISON BASELINE</div>
+            <div style="font-size: var(--text-base); font-weight: 600; color: var(--text-primary); margin-top: 2px;" id="loc-baseline-val">—</div>
+          </div>
+        </div>
+
+        <!-- Narrative Summary Box -->
+        <div id="loc-summary-box" style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-4);">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <span id="loc-summary-icon" style="font-size: 1.25rem; line-height: 1;">•</span>
+            <div>
+              <div style="font-family: 'Inter', sans-serif; font-size: var(--text-sm); color: var(--text-primary); font-weight: 500; line-height: 1.5;" id="loc-summary-text">
+                Loading tampering localization analysis…
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary); margin-top: 4px;" id="loc-target-text"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Affected Locations List -->
+        <div id="loc-items-container" style="margin-bottom: var(--space-4);">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Limitations / Format Disclosures -->
+        <div id="loc-limitations-box" style="display:none; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-3);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-2); letter-spacing: 0.04em;">
+            FORMAT LOCALIZATION LIMITATIONS &amp; BASELINE DISCLOSURES
+          </div>
+          <div id="loc-limitations-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Informational footer note -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); margin-top: var(--space-2);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            Deterministic Evidence Rule: QuantumTrust reports exact locations only when supported by verifiable structural/cryptographic evidence.
+          </span>
+          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">Anti-Fabrication Engine</span>
+        </div>
+
+      </div>
+    </div>
+
     <!-- SIGNATURE TIMELINE & REVISION HISTORY -->
     <div class="section" id="sig-timeline-section" style="margin-top: var(--space-6);">
       <div class="card" style="border-top: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
+
         
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
@@ -567,6 +644,9 @@ const { id } = Astro.params;
       </div>`;
     }).join('');
 
+    // ── Tampering Localization Engine ─────────────────────────────────────
+    renderTamperingLocalization(r);
+
     // ── Signature Timeline & Revision History ──────────────────────────────
     renderSignatureTimeline(r);
 
@@ -596,7 +676,203 @@ const { id } = Astro.params;
     }
   }
 
+  function renderTamperingLocalization(r) {
+    const loc = r.tampering_localization ?? {};
+    const status = (loc.status ?? 'NOT_AVAILABLE').toUpperCase();
+    const level = (loc.localization_level ?? 'NOT_AVAILABLE').toUpperCase();
+    const conf = (loc.confidence ?? 'UNKNOWN').toUpperCase();
+    const isTampered = Boolean(loc.tampering_detected);
+    const baseline = loc.comparison_source ?? 'NO_TRUSTED_BASELINE';
+    const items = loc.affected_items ?? [];
+    const limitations = loc.limitations ?? [];
+    const findings = loc.findings ?? [];
+
+    // Header Badges
+    const statusClass = isTampered ? 'danger' : status === 'NO_TAMPERING_DETECTED' ? 'ok' : 'neutral';
+    const statusBadge = document.getElementById('loc-status-badge');
+    if (statusBadge) {
+      statusBadge.className = `badge badge--${statusClass}`;
+      statusBadge.textContent = isTampered ? 'TAMPERING DETECTED' : (status === 'NO_TAMPERING_DETECTED' ? 'NO TAMPERING' : status);
+    }
+
+    const levelBadge = document.getElementById('loc-level-badge');
+    if (levelBadge) {
+      levelBadge.className = `badge badge--${level !== 'NOT_AVAILABLE' && level !== 'NONE' ? 'accent' : 'neutral'}`;
+      levelBadge.textContent = `LEVEL: ${level}`;
+    }
+
+    const confBadge = document.getElementById('loc-confidence-badge');
+    if (confBadge) {
+      const confClass = conf === 'HIGH' ? 'ok' : conf === 'MEDIUM' ? 'warn' : 'neutral';
+      confBadge.className = `badge badge--${confClass}`;
+      confBadge.textContent = `CONFIDENCE: ${conf}`;
+    }
+
+    // KPI Metrics
+    const statusVal = document.getElementById('loc-status-val');
+    if (statusVal) {
+      statusVal.textContent = isTampered ? 'TAMPERING DETECTED' : (status === 'NO_TAMPERING_DETECTED' ? 'INTACT / AUTHENTIC' : 'NOT AVAILABLE');
+      statusVal.style.color = isTampered ? 'var(--danger)' : (status === 'NO_TAMPERING_DETECTED' ? 'var(--ok)' : 'var(--text-primary)');
+    }
+
+    const levelVal = document.getElementById('loc-level-val');
+    if (levelVal) levelVal.textContent = level;
+
+    const countVal = document.getElementById('loc-count-val');
+    if (countVal) countVal.textContent = `${items.length} Location(s)`;
+
+    const baseVal = document.getElementById('loc-baseline-val');
+    if (baseVal) baseVal.textContent = baseline.replace(/_/g, ' ');
+
+    // Narrative Summary Box
+    const sumIcon = document.getElementById('loc-summary-icon');
+    if (sumIcon) {
+      sumIcon.textContent = isTampered ? '✕' : (status === 'NO_TAMPERING_DETECTED' ? '✓' : 'ℹ');
+      sumIcon.style.color = isTampered ? 'var(--danger)' : (status === 'NO_TAMPERING_DETECTED' ? 'var(--ok)' : 'var(--accent)');
+    }
+
+    const sumText = document.getElementById('loc-summary-text');
+    if (sumText) {
+      sumText.textContent = loc.summary || (
+        isTampered
+          ? `Structural tampering was identified across ${items.length} affected document component(s).`
+          : (status === 'NO_TAMPERING_DETECTED'
+              ? 'No structural modifications were detected relative to the signed cryptographic baseline.'
+              : 'Structural tampering localization is not available for this document format or baseline.')
+      );
+    }
+
+    const targetText = document.getElementById('loc-target-text');
+    if (targetText) {
+      const targetParts = [];
+      if (loc.affected_revision) targetParts.push(`Affected Revision: ${loc.affected_revision}`);
+      if (loc.affected_signature) targetParts.push(`Affected Signature: ${loc.affected_signature}`);
+      targetText.textContent = targetParts.join(' | ');
+    }
+
+    // Items Container
+    const itemsContainer = document.getElementById('loc-items-container');
+    if (itemsContainer) {
+      if (status === 'NO_TAMPERING_DETECTED') {
+        itemsContainer.innerHTML = `
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-left: 3px solid var(--ok); border-radius: 4px; padding: var(--space-4);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="color: var(--ok); font-weight: bold; font-size: 1.125rem;">✓</span>
+              <div>
+                <div style="font-family: 'Inter', sans-serif; font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">
+                  Document Content Intact &amp; Verified
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: 2px;">
+                  The cryptographic signature covers the document bytes and no unauthorized modifications were detected.
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (items.length === 0) {
+        itemsContainer.innerHTML = `
+          <div style="background: var(--bg-surface); border: 1px dashed var(--border); border-radius: 4px; padding: var(--space-4); text-align: center;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary);">
+              ${isTampered
+                ? 'Tampering detected by cryptographic engine; exact structural localization is unavailable for this format.'
+                : 'No specific affected structural locations to display.'}
+            </div>
+          </div>
+        `;
+      } else {
+        itemsContainer.innerHTML = items.map((item, idx) => {
+          const locType = item.location_type || 'UNKNOWN';
+          const changeType = item.change_type || 'CONTENT_CHANGED';
+          const itemConf = (item.localization_confidence || 'UNKNOWN').toUpperCase();
+          const confBadgeClass = itemConf === 'HIGH' ? 'ok' : itemConf === 'MEDIUM' ? 'warn' : 'neutral';
+          const hasBeforeAfter = (item.before_value !== null && item.before_value !== undefined) || (item.after_value !== null && item.after_value !== undefined);
+
+          return `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-3);">
+              
+              <!-- Location Header Row -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-3); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-2);">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; color: var(--text-muted);">#${idx + 1}</span>
+                  <span style="font-family: 'Inter', sans-serif; font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">${item.location || 'Unknown Location'}</span>
+                  <span class="badge badge--accent" style="font-size: 0.625rem;">${locType}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="badge badge--danger" style="font-size: 0.625rem;">${changeType}</span>
+                  <span class="badge badge--${confBadgeClass}" style="font-size: 0.625rem;">${itemConf} CONFIDENCE</span>
+                </div>
+              </div>
+
+              <!-- Structural Coordinates -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); margin-bottom: var(--space-3); background: var(--bg-raised); border: 1px solid var(--border-subtle); border-radius: 4px; padding: var(--space-2) var(--space-3);">
+                ${item.page != null ? `<div><span style="color:var(--text-muted)">Page:</span> <span style="color:var(--text-primary);font-weight:600">${item.page}</span></div>` : ''}
+                ${item.object_id != null ? `<div><span style="color:var(--text-muted)">Object ID:</span> <span style="color:var(--text-primary);font-weight:600">${item.object_id}</span></div>` : ''}
+                ${item.json_path ? `<div><span style="color:var(--text-muted)">JSON Path:</span> <span style="color:var(--text-primary);font-weight:600">${item.json_path}</span></div>` : ''}
+                ${item.xml_xpath ? `<div><span style="color:var(--text-muted)">XPath:</span> <span style="color:var(--text-primary);font-weight:600">${item.xml_xpath}</span></div>` : ''}
+                ${item.document_part ? `<div><span style="color:var(--text-muted)">Part:</span> <span style="color:var(--text-primary);font-weight:600">${item.document_part}</span></div>` : ''}
+                ${item.structural_path ? `<div><span style="color:var(--text-muted)">Structural Path:</span> <span style="color:var(--text-primary)">${item.structural_path}</span></div>` : ''}
+                ${item.byte_range ? `<div><span style="color:var(--text-muted)">Byte Range:</span> <span style="color:var(--text-primary)">[${item.byte_range.join(', ')}]</span></div>` : ''}
+              </div>
+
+              <!-- Before / After Diff (If Available) -->
+              ${hasBeforeAfter ? `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+                  <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 4px; padding: var(--space-3);">
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; font-weight: 600; color: var(--danger); margin-bottom: 4px;">BEFORE (TRUSTED BASELINE)</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-primary); word-break: break-all;">
+                      ${item.before_value !== null && item.before_value !== undefined ? (typeof item.before_value === 'object' ? JSON.stringify(item.before_value) : String(item.before_value)) : '— (Not present)'}
+                    </div>
+                  </div>
+                  <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 4px; padding: var(--space-3);">
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; font-weight: 600; color: var(--accent); margin-bottom: 4px;">AFTER (CURRENT DOCUMENT)</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-primary); word-break: break-all;">
+                      ${item.after_value !== null && item.after_value !== undefined ? (typeof item.after_value === 'object' ? JSON.stringify(item.after_value) : String(item.after_value)) : '— (Deleted)'}
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Evidence Points List -->
+              ${item.evidence && item.evidence.length > 0 ? `
+                <div style="margin-top: 6px;">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">EVIDENCE POINTS</div>
+                  <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                    ${item.evidence.map(e => `
+                      <li style="display: flex; align-items: flex-start; gap: 6px; font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4;">
+                        <span style="color: var(--danger); line-height: 1;">•</span>
+                        <span>${e}</span>
+                      </li>
+                    `).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Limitations Box
+    const limBox = document.getElementById('loc-limitations-box');
+    const limList = document.getElementById('loc-limitations-list');
+    if (limBox && limList) {
+      if (limitations.length > 0) {
+        limBox.style.display = 'block';
+        limList.innerHTML = limitations.map(lim => `
+          <div style="display: flex; align-items: flex-start; gap: 6px; font-size: var(--text-xs); color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;">
+            <span style="color: var(--text-muted);">ℹ</span>
+            <span>${lim}</span>
+          </div>
+        `).join('');
+      } else {
+        limBox.style.display = 'none';
+      }
+    }
+  }
+
   function renderSignatureTimeline(r) {
+
     const tl = r.signature_timeline ?? {};
     const events = (tl.events && tl.events.length > 0) ? tl.events : (tl.signatures ?? []);
     const findings = tl.findings ?? [];

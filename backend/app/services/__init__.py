@@ -11,6 +11,7 @@ from app.services import (
     quantum_analysis,
     explainable_verification,
     signature_timeline,
+    tampering_localization,
 )
 
 __all__ = [
@@ -23,4 +24,6 @@ __all__ = [
     "quantum_analysis",
     "explainable_verification",
     "signature_timeline",
+    "tampering_localization",
 ]
+

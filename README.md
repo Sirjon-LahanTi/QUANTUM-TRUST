@@ -152,19 +152,21 @@ QT_CORS_ORIGINS=["http://localhost:4321","http://localhost:4322"]
 
 ---
 
-## Format Capability Matrix
+## Format & Tampering Localization Capability Matrix
 
-QuantumTrust implements a format-independent normalized timeline architecture with format-specific adapters:
+QuantumTrust implements a format-independent normalized timeline and tampering localization architecture with format-specific adapters:
 
-| Format / Container | Signature Verification | Multiple Signatures | Timeline & Chronology | Revision / ByteRange Analysis |
-|--------------------|------------------------|---------------------|-----------------------|-------------------------------|
-| **PDF** (.pdf) | Full (pyHanko + CMS) | Full (Multi-Sig Co-signing) | Full (Incremental Revisions) | Full (ByteRange + Revision Coverage) |
-| **CMS / PKCS#7** (.p7s, .p7b, .p7m) | Full (ASN.1 ContentInfo) | Full (Multiple SignerInfos) | Structural (Signing Time / TST) | Enclosed Content (Non-ByteRange) |
-| **XML / XMLDSig** (.xml) | Full (XMLDSig/XAdES) | Full (Multiple ds:Signature) | Format-Dependent (XAdES time) | Element Reference Coverage |
-| **Office OpenXML** (.docx, .xlsx, .pptx) | Package Signature Detect | Package Multiple Signatures | Explicit NOT_AVAILABLE | Open Packaging Structure |
-| **Plain Text / Binary** | Not Applicable | Not Applicable | Explicit NOT_AVAILABLE | Not Applicable |
+| Format / Container | Signature Verification | Multiple Signatures | Timeline & Chronology | Tampering Localization Level |
+|--------------------|------------------------|---------------------|-----------------------|------------------------------|
+| **PDF** (.pdf) | Full (pyHanko + CMS) | Full (Multi-Sig Co-signing) | Full (Incremental Revisions) | **Page / Object / ByteRange** (Revision Diff) |
+| **XML / XMLDSig** (.xml) | Full (XMLDSig/XAdES) | Full (Multiple ds:Signature) | Format-Dependent (XAdES time) | **Element / XPath / Reference Digest** |
+| **JSON / JWS** (.json, .jws) | Full (JWS Envelope) | Full (Multiple Signatures) | Structural | **Field / JSON Path / Value Diff** |
+| **Office OpenXML** (.docx, .xlsx, .pptx) | Package Signature Detect | Package Multiple Signatures | Explicit NOT_AVAILABLE | **Document Part / Package Structure** |
+| **CMS / PKCS#7** (.p7s, .p7b, .p7m) | Full (ASN.1 ContentInfo) | Full (Multiple SignerInfos) | Structural (Signing Time / TST) | **Byte Range / SignerInfo Container** |
+| **Plain Text / Binary** | Not Applicable | Not Applicable | Explicit NOT_AVAILABLE | **Byte Level** (Reference Diff) |
 
-*Anti-fabrication guarantee:* If a format does not expose reliable signature chronology, QuantumTrust explicitly reports `NOT_AVAILABLE` with a clear explanation rather than fabricating missing data.
+*Anti-fabrication guarantee:* If a format does not expose reliable structural evidence or signature chronology, QuantumTrust explicitly reports `NOT_AVAILABLE` or `LOCALIZATION_LIMITED_BY_FORMAT` with a clear explanation rather than fabricating missing data or guessing page numbers.
+
 
 ---
 

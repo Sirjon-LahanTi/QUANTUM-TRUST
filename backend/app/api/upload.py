@@ -30,7 +30,9 @@ from app.services import (
     quantum_analysis,
     explainable_verification,
     signature_timeline,
+    tampering_localization,
 )
+
 
 
 logger = logging.getLogger(__name__)
@@ -273,7 +275,35 @@ async def analyze_pdf(
             "signatures": [],
         }
 
-    # ── 13. Explainable Verification (Deterministic rule-based explanation) ───
+    # ── 13. Tampering Localization Engine ──────────────────────────────────────
+    try:
+        tampering_loc = await asyncio.to_thread(
+            tampering_localization.localize_tampering,
+            file_path_or_bytes=pdf_bytes,
+            file_type=detected_file_type,
+            filename=filename,
+            existing_verification_result=sig_result,
+            signature_timeline=sig_timeline,
+            integrity_result=integrity_result,
+            pdf_structure=pdf_structure,
+        )
+    except Exception as exc:
+        logger.error("Tampering localization failed: %s", exc)
+        tampering_loc = {
+            "status": "ERROR",
+            "localization_level": "NOT_AVAILABLE",
+            "tampering_detected": False,
+            "confidence": "UNKNOWN",
+            "comparison_source": "NO_TRUSTED_BASELINE",
+            "affected_revision": None,
+            "affected_signature": None,
+            "affected_items": [],
+            "findings": ["LOCALIZATION_UNAVAILABLE"],
+            "limitations": [str(exc)],
+            "summary": f"Tampering localization failed: {exc}",
+        }
+
+    # ── 14. Explainable Verification (Deterministic rule-based explanation) ───
     evidence = explainable_verification.extract_evidence_from_analysis(
         sig_result=sig_result,
         cert_info=cert_info,
@@ -284,10 +314,11 @@ async def analyze_pdf(
         quantum_result=q_result,
         cert_inspection=cert_inspection,
         signature_timeline=sig_timeline,
+        tampering_localization=tampering_loc,
     )
     explanation_res = explainable_verification.generate_explanation(evidence, verdict)
 
-    # ── 14. Assemble result ────────────────────────────────────────────────────
+    # ── 15. Assemble result ────────────────────────────────────────────────────
     now = datetime.now(timezone.utc)
 
     full_result: dict[str, Any] = {
@@ -346,7 +377,9 @@ async def analyze_pdf(
         "explainable_verification": explanation_res.model_dump(),
         "certificate_inspection": cert_inspection,
         "signature_timeline": sig_timeline,
+        "tampering_localization": tampering_loc,
     }
+
 
 
     # ── 13. Persist ────────────────────────────────────────────────────────────

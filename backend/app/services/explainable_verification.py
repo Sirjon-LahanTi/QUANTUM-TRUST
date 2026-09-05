@@ -132,6 +132,7 @@ class VerificationEvidence:
     signatures_detail: list[dict[str, Any]] = field(default_factory=list)
     certificate_inspection: dict[str, Any] | None = None
     signature_timeline: dict[str, Any] | None = None
+    tampering_localization: dict[str, Any] | None = None
 
 
 # ── Evidence Extractor from Subsystem Dictionaries ───────────────────────────
@@ -146,7 +147,9 @@ def extract_evidence_from_analysis(
     quantum_result: dict[str, Any] | None = None,
     cert_inspection: dict[str, Any] | None = None,
     signature_timeline: dict[str, Any] | None = None,
+    tampering_localization: dict[str, Any] | None = None,
 ) -> VerificationEvidence:
+
     """
     Constructs normalized VerificationEvidence from raw backend sub-system outputs.
     Ensures missing values remain None/unknown rather than false negatives.
@@ -284,7 +287,9 @@ def extract_evidence_from_analysis(
         signatures_detail=sig_result.get("signatures", []),
         certificate_inspection=cert_inspection,
         signature_timeline=signature_timeline,
+        tampering_localization=tampering_localization,
     )
+
 
 
 # ── Deterministic Rule-Based Engine ──────────────────────────────────────────
@@ -648,24 +653,47 @@ def generate_explanation(
                 reason="No unauthorized byte modifications were detected within the signed ByteRange.",
             ))
         elif evidence.integrity_verified is False:
+            tl = evidence.tampering_localization or {}
+            tl_status = tl.get("status")
+            affected_items = tl.get("affected_items", [])
+            loc_parts = [it.get("location") for it in affected_items if it.get("location")]
+            loc_summary = ", ".join(loc_parts[:3]) if loc_parts else None
+
+            exp_msg = "The signed content no longer matches the cryptographic signature evidence."
+            tech_detail = "Discrepancy detected between the signed byte sequence and current document byte content."
+            if loc_summary:
+                exp_msg += f" Tampering was localized to: {loc_summary}."
+                tech_detail += f" Localization engine identified {len(affected_items)} modified structural item(s)."
+
             steps.append(VerificationStep(
                 id="content_integrity",
                 order=step_order,
                 check="Signed content integrity (ByteRange)",
                 status=StepStatus.FAIL.value,
-                observed_value="Modified / Corrupted",
+                observed_value=f"Modified ({loc_summary})" if loc_summary else "Modified / Corrupted",
                 expected_condition="Signed ByteRange byte sequence remains unmodified",
-                explanation="The signed content no longer matches the cryptographic signature evidence.",
-                technical_detail="Discrepancy detected between the signed byte sequence and current document byte content.",
+                explanation=exp_msg,
+                technical_detail=tech_detail,
             ))
             evidence_items.append(EvidenceItem(
                 code="INTEGRITY_FAILED",
                 category=EvidenceCategory.INTEGRITY.value,
                 status=EvidenceStatus.FAIL.value,
                 title="Signed Content Modified",
-                value="Modified",
-                reason="Document bytes covered by the signature have been altered or corrupted after signing.",
+                value=loc_summary or "Modified",
+                reason=f"Document content covered by the signature has been altered after signing ({loc_summary or 'structural content mismatch'}).",
             ))
+            if affected_items:
+                for aff_it in affected_items[:5]:
+                    evidence_items.append(EvidenceItem(
+                        code="TAMPERING_LOCALIZED",
+                        category=EvidenceCategory.INTEGRITY.value,
+                        status=EvidenceStatus.FAIL.value,
+                        title=f"Tampering: {aff_it.get('location', 'Unknown Location')}",
+                        value=aff_it.get("change_type", "CONTENT_CHANGED"),
+                        reason="; ".join(aff_it.get("evidence", [])) or "Modified relative to signed baseline.",
+                    ))
+
         else:
             steps.append(VerificationStep(
                 id="content_integrity",

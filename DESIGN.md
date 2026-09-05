@@ -448,6 +448,36 @@ Value: `IBM Plex Mono`, `--text-2xl`, 600, `--text-primary`
 - ❌ Neon glow effects
 - ❌ Rainbow gradients
 - ❌ Generic "SaaS card kit" look (identical rounded cards, soft grey shadows)
+- ❌ Fabricated page numbers or object IDs without cryptographic/structural evidence
+
+---
+
+## Tampering Localization Specification
+
+The Tampering Localization Engine presents deterministic, evidence-based structural locations where unauthorized modifications occurred:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ TAMPERING LOCALIZATION                                     │
+├────────────────────────────────────────────────────────────┤
+│ STATUS: LOCALIZED   LEVEL: PAGE_LEVEL   CONFIDENCE: HIGH   │
+│                                                            │
+│ • Narrative Summary Callout                                │
+│ • Affected Items List:                                     │
+│   ┌──────────────────────────────────────────────────────┐ │
+│   │ #1 Page 3 (Object 14)       CONTENT_CHANGED          │ │
+│   │ Path: /Pages/Page[3]/Object[14]                      │ │
+│   │ Before: [Signed baseline state]                      │ │
+│   │ After:  [Modified current state]                     │ │
+│   │ Evidence: ByteRange digest mismatch in revision 1    │ │
+│   └──────────────────────────────────────────────────────┘ │
+│ • Format Limitation & Baseline Disclosures                 │
+└────────────────────────────────────────────────────────────┘
+```
+
+- **Visual Tone:** Professional, evidence-driven, clear distinctions between authentic signed revisions, legitimate incremental updates, and unauthorized content modifications.
+- **Before/After Diffing:** High-contrast, clean red/blue tonal contrast for trusted baseline vs current document states.
+
 - ❌ ALL CAPS section eyebrows (e.g., "SECURITY DASHBOARD" above every heading)
 - ❌ Middle-dot meta strings (A · B · C)
 - ❌ Arrow appended to every link ("Verify →")
