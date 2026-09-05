@@ -137,7 +137,7 @@ const { id } = Astro.params;
 </Layout>
 
 <script define:vars={{ analysisId: id }}>
-  const API = (window as any).PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
+  const API = window.PUBLIC_API_URL || 'http://localhost:8000';
 
   async function load() {
     try {
