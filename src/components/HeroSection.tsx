@@ -206,7 +206,7 @@ export default function HeroSection() {
             animate="animate"
             className="mt-auto max-w-[320px] text-left sm:text-right sm:self-start lg:self-end pb-2"
           >
-            <p className="text-[11px] sm:text-[12px] md:text-[12.5px] font-bold tracking-[0.16em] uppercase text-black dark:text-neutral-200 leading-[1.45] drop-shadow-sm">
+            <p className="text-[11px] sm:text-[12px] md:text-[12.5px] font-bold tracking-[0.16em] uppercase text-black dark:text-white leading-[1.45] drop-shadow-sm">
               REAL CRYPTOGRAPHIC INTEGRITY<br />
               ANALYSIS, TAMPER DETECTION &<br />
               ZERO-KNOWLEDGE DOCUMENT<br />
