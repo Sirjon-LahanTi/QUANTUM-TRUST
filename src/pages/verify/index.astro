@@ -3,18 +3,18 @@ import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 ---
 
-<Layout title="Verify Document" description="Upload a digitally signed PDF for cryptographic signature verification and integrity analysis.">
+<Layout title="Verify Document" description="Upload a digitally signed document or file for cryptographic signature verification and integrity analysis.">
   <Navigation slot="sidebar" />
 
   <div class="page-header">
     <h1 class="page-title">Verify Document</h1>
-    <p class="page-subtitle">Upload a digitally signed file to perform cryptographic signature verification, certificate analysis, and integrity checking.</p>
+    <p class="page-subtitle">Upload a digitally signed file or document to perform cryptographic signature verification, certificate analysis, and integrity checking.</p>
   </div>
 
   <!-- Upload Panel -->
-  <section class="section" id="upload-section" aria-label="Upload signed PDF">
-    <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload signed PDF file">
-      <input type="file" id="file-input" accept=".pdf,application/pdf" aria-label="Choose PDF file" />
+  <section class="section" id="upload-section" aria-label="Upload signed file">
+    <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload signed file">
+      <input type="file" id="file-input" aria-label="Choose file to verify" />
       <div class="upload-icon" aria-hidden="true">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -23,8 +23,8 @@ import Navigation from '../../components/Navigation.astro';
         </svg>
       </div>
       <div class="upload-label">Upload Signed File</div>
-      <div class="upload-hint">Drop your digitally signed file here or browse to begin verification.</div>
-      <div class="upload-hint" style="margin-top:8px;font-size:0.6875rem;">File size &middot; Max 50MB &middot; Secure local analysis</div>
+      <div class="upload-hint">Drop your digitally signed document or file here or browse to begin verification.</div>
+      <div class="upload-hint" style="margin-top:8px;font-size:0.6875rem;">All file types supported &middot; Max 50MB &middot; Secure local analysis</div>
     </div>
     <div id="file-info" class="file-info" style="display:none"></div>
     <div id="upload-error" class="error-banner" style="display:none;margin-top:12px;"></div>
@@ -372,10 +372,17 @@ import Navigation from '../../components/Navigation.astro';
 
     // ── Duplicate ─────────────────────────────────────────────────────────────
     const dup = r.duplicate ?? {};
-    const isDup = Boolean(dup.is_duplicate);
+    const isDup = Boolean(dup.is_duplicate) ||
+      (r.verdict && r.verdict.toUpperCase() === 'TAMPERED') ||
+      (intg.status && intg.status.toUpperCase() === 'FAILED') ||
+      (intg.modification_status && intg.modification_status.toUpperCase() === 'MODIFIED');
+    const matchType = isDup
+      ? (dup.match_type && dup.match_type !== 'NONE' ? dup.match_type : 'TAMPERED_DUPLICATE')
+      : safe(dup.match_type, 'None');
+
     document.getElementById('dup-info')!.innerHTML = kvRows([
       ['Is Duplicate', isDup ? 'Yes' : 'No'],
-      ['Match Type',   safe(dup.match_type, 'None')],
+      ['Match Type',   matchType],
     ]);
 
     // ── Security link ─────────────────────────────────────────────────────────

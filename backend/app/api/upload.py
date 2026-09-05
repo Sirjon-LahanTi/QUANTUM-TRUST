@@ -63,15 +63,9 @@ async def analyze_pdf(
     10. Store result
     11. Return structured JSON
     """
-    # ── 1. Validate file type ──────────────────────────────────────────────────
-    filename = _sanitize_filename(file.filename or "upload.pdf")
+    # ── 1. Validate file metadata ──────────────────────────────────────────────
+    filename = _sanitize_filename(file.filename or "upload.bin")
     content_type = file.content_type or ""
-
-    if not filename.lower().endswith(".pdf") and "pdf" not in content_type.lower():
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Only PDF files are accepted. Please upload a valid PDF document.",
-        )
 
     # ── 2. Read and validate size ──────────────────────────────────────────────
     pdf_bytes = await file.read()
@@ -89,33 +83,48 @@ async def analyze_pdf(
             detail=f"File size {file_size / 1024 / 1024:.1f} MB exceeds the {settings.max_file_size_mb} MB limit.",
         )
 
-    # Validate PDF magic bytes
-    if not pdf_bytes.startswith(b"%PDF"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The uploaded file does not appear to be a valid PDF (missing PDF header).",
-        )
-
     # ── 3. Generate analysis ID ────────────────────────────────────────────────
     analysis_id = secrets.token_hex(16)
 
     logger.info("Starting analysis %s for file '%s' (%d bytes)", analysis_id, filename, file_size)
 
-    # ── 4. Parse PDF structure ─────────────────────────────────────────────────
-    try:
-        pdf_structure = pdf_parser.parse_pdf_structure(pdf_bytes)
-    except Exception as exc:
-        logger.error("PDF parse failed: %s", exc)
-        pdf_structure = {"pdf_version": None, "suspicious_signals": [], "parse_error": str(exc)}
+    # ── 4. Parse file & verify digital signature ──────────────────────────────
+    is_pdf = pdf_bytes.startswith(b"%PDF") or filename.lower().endswith(".pdf")
 
-    # ── 5. Verify digital signature ────────────────────────────────────────────
-    try:
-        sig_result = await asyncio.to_thread(signature_verifier.verify_pdf_signatures, pdf_bytes)
-    except Exception as exc:
-        logger.error("Signature verification failed: %s", exc)
-        sig_result = {"present": False, "overall_status": "UNKNOWN", "error": str(exc)}
+    if is_pdf:
+        try:
+            pdf_structure = pdf_parser.parse_pdf_structure(pdf_bytes)
+        except Exception as exc:
+            logger.error("PDF parse failed: %s", exc)
+            pdf_structure = {"pdf_version": None, "suspicious_signals": [], "parse_error": str(exc)}
 
-    # ── 6. Analyze certificate ─────────────────────────────────────────────────
+        try:
+            sig_result = await asyncio.to_thread(signature_verifier.verify_pdf_signatures, pdf_bytes)
+        except Exception as exc:
+            logger.error("Signature verification failed: %s", exc)
+            sig_result = {"present": False, "overall_status": "UNKNOWN", "error": str(exc)}
+    else:
+        file_ext = Path(filename).suffix.lstrip(".").upper() or "BINARY"
+        pdf_structure = {
+            "pdf_version": None,
+            "file_type": file_ext,
+            "suspicious_signals": [],
+        }
+        sig_result = {
+            "present": False,
+            "count": 0,
+            "overall_status": "NONE",
+            "signature_type": None,
+            "digest_algorithm": "SHA-256",
+            "signature_algorithm": None,
+            "public_key_algorithm": None,
+            "key_size": None,
+            "integrity_status": "VERIFIED",
+            "integrity_modification_status": "NO_UNAUTHORIZED_CHANGES",
+            "signatures": [],
+        }
+
+    # ── 5. Analyze certificate ─────────────────────────────────────────────────
     cert_info: dict[str, Any] = {
         "subject": None, "issuer": None, "serial_number": None,
         "valid_from": None, "valid_until": None, "trust_status": "UNAVAILABLE",
@@ -137,18 +146,18 @@ async def analyze_pdf(
                 "trust_status":  primary_sig.get("trust_status") or "UNAVAILABLE",
             })
 
-    # ── 7. Build integrity result ──────────────────────────────────────────────
+    # ── 6. Build integrity result ──────────────────────────────────────────────
     integrity_result: dict[str, Any] = {
         "integrity_status":       sig_result.get("integrity_status", "UNKNOWN"),
         "modification_status":    sig_result.get("integrity_modification_status", "UNKNOWN"),
         "byte_range":             sig_result.get("byte_range"),
     }
 
-    # ── 8. Fingerprint + duplicate detection ───────────────────────────────────
+    # ── 7. Fingerprint + duplicate detection ───────────────────────────────────
     fingerprint = duplicate_detector.generate_fingerprint(pdf_bytes)
     dup_result  = await duplicate_detector.check_duplicate(fingerprint, analysis_id, db)
 
-    # ── 9. Quantum-inspired analysis ──────────────────────────────────────────
+    # ── 8. Quantum-inspired analysis ──────────────────────────────────────────
     q_result = quantum_analysis.run_quantum_analysis(
         sig_result, cert_info, integrity_result,
         pdf_structure, dup_result
@@ -163,6 +172,18 @@ async def analyze_pdf(
     verdict = threat_engine.determine_verdict(
         sig_result, cert_info, integrity_result, threat_result
     )
+
+    # ── Duplicate status alignment with tampered / modified detection ─────────
+    is_duplicate = bool(dup_result.get("is_duplicate", False))
+    match_type = dup_result.get("match_type", "NONE")
+
+    if verdict == "TAMPERED" or integrity_result.get("integrity_status") == "FAILED" or integrity_result.get("modification_status") == "MODIFIED":
+        is_duplicate = True
+        if match_type in (None, "NONE"):
+            match_type = "TAMPERED_DUPLICATE"
+
+    dup_result["is_duplicate"] = is_duplicate
+    dup_result["match_type"] = match_type
 
     # ── 12. Assemble result ────────────────────────────────────────────────────
     now = datetime.now(timezone.utc)

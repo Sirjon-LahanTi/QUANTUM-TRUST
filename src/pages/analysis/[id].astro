@@ -239,9 +239,17 @@ const { id } = Astro.params;
 
     // Duplicate
     const dup = r.duplicate ?? {};
+    const isDup = Boolean(dup.is_duplicate) ||
+      (r.verdict && r.verdict.toUpperCase() === 'TAMPERED') ||
+      (intg.status && intg.status.toUpperCase() === 'FAILED') ||
+      (intg.modification_status && intg.modification_status.toUpperCase() === 'MODIFIED');
+    const matchType = isDup
+      ? (dup.match_type && dup.match_type !== 'NONE' ? dup.match_type : 'TAMPERED_DUPLICATE')
+      : (dup.match_type ?? 'None');
+
     document.getElementById('dup-info').innerHTML = kvRows([
-      ['Is Duplicate', dup.is_duplicate ? 'Yes' : 'No'],
-      ['Match Type',   dup.match_type ?? 'None'],
+      ['Is Duplicate', isDup ? 'Yes' : 'No'],
+      ['Match Type',   matchType],
     ]);
 
     // Threat
