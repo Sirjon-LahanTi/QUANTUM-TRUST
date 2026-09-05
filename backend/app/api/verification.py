@@ -98,6 +98,10 @@ async def get_analysis(
                 threat_result=sec_data,
                 quantum_result=q_data,
                 cert_inspection=res.get("certificate_inspection"),
+                signature_timeline=res.get("signature_timeline"),
+                tampering_localization=res.get("tampering_localization"),
+                filename=doc_data.get("filename", "document.pdf"),
+                file_size=doc_data.get("file_size"),
             )
             explanation_res = explainable_verification.generate_explanation(evidence, verdict)
             res["explainable_verification"] = explanation_res.model_dump()

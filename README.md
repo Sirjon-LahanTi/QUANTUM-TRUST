@@ -188,6 +188,19 @@ Recommended test cases:
 
 ---
 
+## "Why This Verdict?" Explainable Verification System
+
+QuantumTrust features a deterministic, format-aware explainability engine that explains **WHY** a document received its final verdict:
+
+- **EVIDENCE → ANALYSIS → REASONING → VERDICT:** Explanations map directly to concrete cryptographic and structural verification evidence. Zero AI/LLM text generation.
+- **Key Decision Factors:** Categorized factors (`SIGNATURE_VERIFICATION`, `DOCUMENT_INTEGRITY`, `TAMPERING_LOCALIZATION`, `CERTIFICATE_VALIDITY`, `THREAT_ANALYSIS`) with impact ratings (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`).
+- **Why Not Authentic?:** Explicit, numbered list of failing criteria for `TAMPERED` and `SUSPICIOUS` files.
+- **Verification Trace (01–09):** Step-by-step ordered trace showing observed values, expected conditions, and expandable technical evidence.
+- **Cross-Format Terminology:** Accurate units for PDF (Page/ByteRange), XML (XPath/Reference), JSON (JSON Path), Excel (Sheet/Cell), Word (Paragraph/Part), and Binary streams.
+- **Anti-Fabrication & Disclosures:** Unknown data remains explicitly `UNKNOWN` / `NOT_CHECKED` without fabricating fake timestamps, algorithms, or modified locations.
+
+---
+
 ## Dashboards
 
 Each dashboard opens in a **new browser tab** (per `target="_blank"`):
@@ -198,4 +211,4 @@ Each dashboard opens in a **new browser tab** (per `target="_blank"`):
 | `/dashboard` | System statistics and recent analyses |
 | `/verify` | Document upload, verification, and interactive signature timeline |
 | `/security?id={id}` | Threat analysis and quantum metrics |
-| `/analysis/{id}` | Full analysis detail with expandable signature timeline audit records |
+| `/analysis/{id}` | Full analysis detail with "Why This Verdict?" explainability and audit records |

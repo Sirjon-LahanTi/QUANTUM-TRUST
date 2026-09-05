@@ -64,37 +64,88 @@ class QuantumAnalysis(BaseModel):
     simulation_note: str | None = None
 
 
+class DecisionFactor(BaseModel):
+    factor: str
+    impact: str = "MEDIUM"  # CRITICAL, HIGH, MEDIUM, LOW, INFO
+    status: str = "PASS"    # PASS, FAIL, WARNING, LOCALIZED, SUSPICIOUS, NOT_AVAILABLE
+    explanation: str
+
+
 class VerificationStep(BaseModel):
-    id: str
-    order: int
-    check: str
-    status: str  # PASS, FAIL, WARNING, NOT_CHECKED
+    step_id: str | None = None
+    id: str | None = None
+    order: int = 1
+    category: str = "SIGNATURE_VERIFICATION"  # FILE_FORMAT, SIGNATURE_VERIFICATION, CERTIFICATE, PUBLIC_KEY, DOCUMENT_INTEGRITY, SIGNATURE_TIMELINE, TAMPERING_LOCALIZATION, THREAT_ANALYSIS, QUANTUM_INSPIRED_ANALYSIS, FINAL_VERDICT
+    check: str | None = None
+    title: str | None = None
+    status: str = "PASS"  # PASS, FAIL, WARNING, NOT_CHECKED, NOT_AVAILABLE
     observed_value: str | None = None
     expected_condition: str | None = None
-    explanation: str
+    explanation: str = ""
+    evidence: list[str] = Field(default_factory=list)
     technical_detail: str | None = None
+    technical_details: str | None = None
+    severity: str | None = None  # CRITICAL, HIGH, MEDIUM, LOW, INFO
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.step_id is None and self.id is not None:
+            self.step_id = self.id
+        elif self.id is None and self.step_id is not None:
+            self.id = self.step_id
+
+        if self.title is None and self.check is not None:
+            self.title = self.check
+        elif self.check is None and self.title is not None:
+            self.check = self.title
+
+        if self.technical_details is None and self.technical_detail is not None:
+            self.technical_details = self.technical_detail
+        elif self.technical_detail is None and self.technical_details is not None:
+            self.technical_detail = self.technical_details
 
 
 class EvidenceItem(BaseModel):
-    code: str
-    category: str
-    status: str  # PASS, FAIL, WARNING, INFO
-    title: str
+    evidence_id: str | None = None
+    code: str | None = None
+    category: str = "SIGNATURE"
+    source: str = "VERIFICATION_ENGINE"
+    field: str | None = None
+    status: str = "PASS"  # PASS, FAIL, WARNING, INFO
+    title: str = ""
     value: str | None = None
-    reason: str
+    description: str | None = None
+    reason: str | None = None
+    importance: str = "MEDIUM"  # CRITICAL, HIGH, MEDIUM, LOW, INFO
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.evidence_id is None and self.code is not None:
+            self.evidence_id = self.code
+        elif self.code is None and self.evidence_id is not None:
+            self.code = self.evidence_id
+
+        if self.description is None and self.reason is not None:
+            self.description = self.reason
+        elif self.reason is None and self.description is not None:
+            self.reason = self.description
 
 
 class ExplanationResult(BaseModel):
+    verdict: str = "SUSPICIOUS"
     summary: str
+    confidence: str = "HIGH"  # HIGH, MEDIUM, LOW, UNKNOWN, NOT_AVAILABLE
+    decision_factors: list[DecisionFactor] = Field(default_factory=list)
     verification_steps: list[VerificationStep] = Field(default_factory=list)
     evidence: list[EvidenceItem] = Field(default_factory=list)
+    why_not_authentic: list[str] = Field(default_factory=list)
+    what_would_change_verdict: str | None = None
+    warnings: list[Any] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
     failed_checks: list[EvidenceItem] = Field(default_factory=list)
-    warnings: list[EvidenceItem] = Field(default_factory=list)
     passed_checks: list[EvidenceItem] = Field(default_factory=list)
-    final_reason: str
-    confidence: str  # HIGH, MEDIUM, LOW, NOT_AVAILABLE
+    final_reason: str = ""
     methodology: str = (
-        "Deterministic rule-based explanation derived from cryptographic verification evidence."
+        "Deterministic rule-based explanation derived from cryptographic verification evidence. "
+        "Classical quantum-inspired metrics serve as secondary mathematical anomaly signals."
     )
 
 

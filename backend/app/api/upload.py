@@ -315,6 +315,9 @@ async def analyze_pdf(
         cert_inspection=cert_inspection,
         signature_timeline=sig_timeline,
         tampering_localization=tampering_loc,
+        file_type=detected_file_type,
+        filename=filename,
+        file_size=file_size,
     )
     explanation_res = explainable_verification.generate_explanation(evidence, verdict)
 

@@ -478,6 +478,53 @@ The Tampering Localization Engine presents deterministic, evidence-based structu
 - **Visual Tone:** Professional, evidence-driven, clear distinctions between authentic signed revisions, legitimate incremental updates, and unauthorized content modifications.
 - **Before/After Diffing:** High-contrast, clean red/blue tonal contrast for trusted baseline vs current document states.
 
+---
+
+## "Why This Verdict?" Explainability Specification
+
+The Explainable Verification System provides a deterministic, format-aware, evidence-based explanation answering why QuantumTrust reached a verdict of **AUTHENTIC**, **TAMPERED**, or **SUSPICIOUS**.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ WHY THIS VERDICT?                                          │
+├────────────────────────────────────────────────────────────┤
+│ VERDICT: TAMPERED   CONFIDENCE: HIGH   FORMAT: PDF         │
+│                                                            │
+│ • Executive Verdict Statement & Reason Callout             │
+│                                                            │
+│ KEY DECISION FACTORS                                       │
+│ ┌──────────────────────┬─────────────────────────────────┐ │
+│ │ SIGNATURE [FAIL]     │ Cryptographic verification      │ │
+│ │ CRITICAL             │ failed for signed content.      │ │
+│ ├──────────────────────┼─────────────────────────────────┤ │
+│ │ INTEGRITY [FAIL]     │ Signed ByteRange differs from   │ │
+│ │ CRITICAL             │ current document stream.        │ │
+│ └──────────────────────┴─────────────────────────────────┘ │
+│                                                            │
+│ WHY NOT AUTHENTIC?                                         │
+│ 1. Cryptographic signature verification failed.            │
+│ 2. Signed content integrity failed (Page 3 altered).       │
+│                                                            │
+│ VERIFICATION TRACE PIPELINE                                │
+│ 01 File Identification        ✓ [PDF (contract.pdf)]       │
+│ 02 Signature Presence         ✓ [1 signature detected]     │
+│ 03 Algorithm Identification   ✓ [SHA-256 / RSA-PSS]        │
+│ 04 Certificate Validation     ⚠ [Expired]                  │
+│ 05 Signature Cryptography     ✕ [Invalid / Mismatch]       │
+│ 06 Document Integrity         ✕ [Modified (Page 3)]        │
+│ 07 Tampering Localization     ✕ [Page 3 Localized]         │
+│ 08 Threat Analysis            ✕ [HIGH (85/100)]            │
+│ 09 Final Verdict              ✕ [TAMPERED]                 │
+│                                                            │
+│ SYSTEM LIMITATIONS & DISCLOSURES                           │
+│ ℹ Certificate chain trust could not be established locally.│
+└────────────────────────────────────────────────────────────┘
+```
+
+- **Evidence Hierarchy:** Cryptographic Verification > Content Integrity > Certificate Validity/Trust > Timeline Consistency > Tampering Localization > Threat Analysis > Quantum Anomaly Signal.
+- **Anti-Fabrication:** Missing data remains `UNKNOWN` / `NOT_CHECKED` and is never coerced into `FAIL` or `PASS`.
+- **Zero AI/LLM:** All explanations are deterministic rule-based derivations directly traceable to verifiable evidence.
+
 - ❌ ALL CAPS section eyebrows (e.g., "SECURITY DASHBOARD" above every heading)
 - ❌ Middle-dot meta strings (A · B · C)
 - ❌ Arrow appended to every link ("Verify →")

@@ -43,59 +43,119 @@ const { id } = Astro.params;
     <!-- WHY THIS VERDICT? Explainable Verification Section -->
     <div class="section" id="explainable-section">
       <div class="card" style="border-left: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-3);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="section-title" style="margin: 0; font-size: 0.8125rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
+        
+        <!-- Header Strip -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span class="section-title" style="margin: 0; font-size: 0.875rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
               WHY THIS VERDICT?
             </span>
-            <span class="badge badge--neutral" id="exp-confidence-badge" style="font-size: 0.6875rem;">CONFIDENCE: —</span>
+            <span class="badge badge--neutral" id="exp-verdict-badge">VERDICT: —</span>
+            <span class="badge badge--neutral" id="exp-confidence-badge">CONFIDENCE: —</span>
+            <span class="badge badge--neutral" id="exp-format-badge">FORMAT: —</span>
           </div>
           <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
-            DETERMINISTIC VERIFICATION ENGINE
+            EVIDENCE → ANALYSIS → REASONING → VERDICT
           </span>
         </div>
 
-        <!-- Final Reason Callout -->
+        <!-- Executive Final Reason Callout -->
         <div id="exp-final-reason-box" style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-4);">
-          <div style="display: flex; align-items: flex-start; gap: 12px;">
-            <span id="exp-verdict-icon" style="font-size: 1.25rem; line-height: 1;">•</span>
-            <div>
-              <div style="font-family: 'Inter', sans-serif; font-size: var(--text-base); color: var(--text-primary); font-weight: 500; line-height: 1.5;" id="exp-final-reason-text">
+          <div style="display: flex; align-items: flex-start; gap: 14px;">
+            <span id="exp-verdict-icon" style="font-size: 1.5rem; line-height: 1; flex-shrink: 0; margin-top: 2px;">•</span>
+            <div style="flex-grow: 1;">
+              <div style="font-family: 'Inter', sans-serif; font-size: 1.0625rem; color: var(--text-primary); font-weight: 600; line-height: 1.5;" id="exp-final-reason-text">
                 Loading explanation…
               </div>
-              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary); margin-top: 6px;" id="exp-summary-text">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary); margin-top: 6px; line-height: 1.4;" id="exp-summary-text">
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Two Column Trace & Evidence -->
-        <div class="exp-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--space-4); margin-bottom: var(--space-3);">
-          <!-- Verification Trace -->
+        <!-- Key Decision Factors Strip -->
+        <div id="exp-decision-factors-box" style="margin-bottom: var(--space-4);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-2); letter-spacing: 0.04em;">
+            KEY DECISION FACTORS
+          </div>
+          <div id="exp-factors-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3);">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Why Not Authentic & What Would Change Boxes (Conditional) -->
+        <div id="exp-why-not-authentic-box" style="display: none; background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.2); border-left: 3px solid var(--danger); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-4);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--danger); margin-bottom: var(--space-2); letter-spacing: 0.04em;">
+            WHY NOT AUTHENTIC?
+          </div>
+          <ul id="exp-why-not-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px;">
+            <!-- Rendered dynamically -->
+          </ul>
+        </div>
+
+        <div id="exp-what-would-change-box" style="display: none; background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.2); border-left: 3px solid var(--accent); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-4);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--accent); margin-bottom: var(--space-2); letter-spacing: 0.04em;">
+            WHAT WOULD MAKE THIS AUTHENTIC?
+          </div>
+          <p id="exp-what-would-change-text" style="font-size: var(--text-xs); color: var(--text-secondary); margin: 0; line-height: 1.5;"></p>
+        </div>
+
+        <!-- Two Column Trace & Granular Evidence -->
+        <div class="exp-grid" style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: var(--space-4); margin-bottom: var(--space-4);">
+          
+          <!-- Column 1: Verification Trace (Step-by-step pipeline) -->
           <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
-            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
-              VERIFICATION TRACE
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); letter-spacing: 0.04em;">
+                VERIFICATION TRACE PIPELINE
+              </div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; color: var(--text-muted);">
+                ORDERED EXECUTION
+              </span>
             </div>
             <div id="exp-trace-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Rendered dynamically -->
             </div>
           </div>
 
-          <!-- Technical Evidence Summary -->
-          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
-            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
-              TECHNICAL EVIDENCE
+          <!-- Column 2: Granular Evidence Items -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; gap: 6px;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); letter-spacing: 0.04em;">
+                EVIDENCE INVENTORY
+              </div>
+              <div id="exp-evidence-filter-buttons" style="display: flex; gap: 4px;">
+                <button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.625rem;" onclick="filterEvidence('ALL')">ALL</button>
+                <button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.625rem; color: var(--danger);" onclick="filterEvidence('FAIL')">FAIL</button>
+                <button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.625rem; color: var(--warn);" onclick="filterEvidence('WARN')">WARN</button>
+                <button class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.625rem; color: var(--ok);" onclick="filterEvidence('PASS')">PASS</button>
+              </div>
             </div>
-            <dl class="kv-list" id="exp-evidence-kv" style="margin: 0;"></dl>
+            <div id="exp-evidence-items-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Limitations & Disclosures (If Any) -->
+        <div id="exp-limitations-box" style="display: none; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-3);">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-2); letter-spacing: 0.04em;">
+            SYSTEM LIMITATIONS &amp; VERIFICATION DISCLOSURES
+          </div>
+          <div id="exp-limitations-list" style="display: flex; flex-direction: column; gap: 4px;">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
-        <!-- Methodology note -->
+        <!-- Methodology Note & Anti-AI Guarantee -->
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); margin-top: var(--space-2);">
           <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);" id="exp-methodology-text">
-            Deterministic rule-based explanation derived from cryptographic verification evidence.
+            Deterministic rule-based explanation derived from cryptographic verification evidence. Classical quantum-inspired metrics serve as secondary mathematical anomaly signals.
           </span>
-          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">No AI / Pure Evidence</span>
+          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">Deterministic • No AI / LLM</span>
         </div>
+
       </div>
     </div>
 
@@ -464,87 +524,7 @@ const { id } = Astro.params;
       </div>`;
 
     // ── Explainable Verification Section ─────────────────────────────────────
-    const exp = r.explainable_verification ?? {};
-    const conf = (exp.confidence ?? 'HIGH').toUpperCase();
-    const confBadge = conf === 'HIGH' ? 'ok' : conf === 'MEDIUM' ? 'warn' : 'neutral';
-    const confEl = document.getElementById('exp-confidence-badge');
-    if (confEl) {
-      confEl.className = `badge badge--${confBadge}`;
-      confEl.textContent = `CONFIDENCE: ${conf}`;
-    }
-
-    const iconEl = document.getElementById('exp-verdict-icon');
-    if (iconEl) {
-      iconEl.textContent = verdict === 'AUTHENTIC' ? '✓' : verdict === 'TAMPERED' ? '✕' : '⚠';
-      iconEl.style.color = verdict === 'AUTHENTIC' ? 'var(--ok)' : verdict === 'TAMPERED' ? 'var(--danger)' : 'var(--warn)';
-    }
-
-    const reasonEl = document.getElementById('exp-final-reason-text');
-    if (reasonEl) {
-      reasonEl.textContent = exp.final_reason || (
-        verdict === 'AUTHENTIC'
-          ? 'Digital signature verification succeeded and the signed content passed integrity validation.'
-          : verdict === 'TAMPERED'
-          ? 'Cryptographic verification failed because the signed content does not validate against the existing signature.'
-          : 'The digital signature is present, but certificate, integrity, or structural checks produced warnings.'
-      );
-    }
-
-    const sumEl = document.getElementById('exp-summary-text');
-    if (sumEl) {
-      sumEl.textContent = exp.summary || `Executive summary: Document classified as ${verdict}.`;
-    }
-
-    // Render Verification Trace
-    const traceEl = document.getElementById('exp-trace-list');
-    if (traceEl) {
-      const steps = exp.verification_steps ?? [];
-      if (steps.length === 0) {
-        traceEl.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:var(--text-xs);color:var(--text-muted);">No trace steps recorded.</div>`;
-      } else {
-        traceEl.innerHTML = steps.map((st) => {
-          const status = (st.status || 'PASS').toUpperCase();
-          const sIcon = status === 'PASS' ? '✓' : status === 'FAIL' ? '✕' : status === 'WARNING' ? '⚠' : '—';
-          const sColor = status === 'PASS' ? 'var(--ok)' : status === 'FAIL' ? 'var(--danger)' : status === 'WARNING' ? 'var(--warn)' : 'var(--text-muted)';
-          return `
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); padding: 4px 0; border-bottom: 1px solid var(--border-subtle);">
-              <div style="display: flex; align-items: flex-start; gap: 8px;">
-                <span style="color: ${sColor}; font-weight: bold; flex-shrink: 0; width: 14px;">${sIcon}</span>
-                <div>
-                  <span style="color: var(--text-primary); font-weight: 500;">${st.check}</span>
-                  ${st.observed_value ? `<span style="color: var(--text-muted); margin-left: 6px;">[${st.observed_value}]</span>` : ''}
-                  ${st.explanation ? `<div style="color: var(--text-secondary); font-size: 0.6875rem; margin-top: 2px;">${st.explanation}</div>` : ''}
-                </div>
-              </div>
-              <span class="badge badge--${status === 'PASS' ? 'ok' : status === 'FAIL' ? 'danger' : status === 'WARNING' ? 'warn' : 'neutral'}" style="font-size: 0.625rem;">
-                ${status}
-              </span>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    // Render Technical Evidence Table
-    const evKv = document.getElementById('exp-evidence-kv');
-    if (evKv) {
-      const s = r.signature ?? {};
-      const c = r.certificate ?? {};
-      const intg = r.integrity ?? {};
-      evKv.innerHTML = kvRows([
-        ['Digest Algorithm',     s.digest_algorithm     ?? 'Not detected', true],
-        ['Signature Algorithm',  s.signature_algorithm  ?? 'Not detected', true],
-        ['Public Key Scheme',    s.public_key_algorithm ? `${s.public_key_algorithm} (${s.key_size ?? '?'} bits)` : 'Not detected', true],
-        ['Certificate Trust',    c.trust_status         ?? 'UNAVAILABLE'],
-        ['ByteRange Validity',   Array.isArray(intg.byte_range) && intg.byte_range.length ? 'Valid Range' : 'No Range', true],
-        ['Document Integrity',   intg.status            ?? 'UNKNOWN'],
-      ]);
-    }
-
-    const methEl = document.getElementById('exp-methodology-text');
-    if (methEl && exp.methodology) {
-      methEl.textContent = exp.methodology;
-    }
+    renderExplainableVerification(r);
 
     // Document
     document.getElementById('doc-info').innerHTML = kvRows([
@@ -675,6 +655,260 @@ const { id } = Astro.params;
       };
     }
   }
+
+  function renderExplainableVerification(r) {
+    const exp = r.explainable_verification ?? {};
+    const verdict = (r.verdict ?? exp.verdict ?? 'SUSPICIOUS').toUpperCase();
+    const conf = (exp.confidence ?? 'HIGH').toUpperCase();
+    const docFormat = (r.signature_timeline?.format || (r.document?.pdf_version ? 'PDF' : (r.document?.filename?.split('.').pop() || 'DOCUMENT'))).toUpperCase();
+
+    // Verdict Badge
+    const vClass = verdict === 'AUTHENTIC' ? 'ok' : verdict === 'TAMPERED' ? 'danger' : 'warn';
+    const vBadgeEl = document.getElementById('exp-verdict-badge');
+    if (vBadgeEl) {
+      vBadgeEl.className = `badge badge--${vClass}`;
+      vBadgeEl.textContent = `VERDICT: ${verdict}`;
+    }
+
+    // Confidence Badge
+    const confClass = conf === 'HIGH' ? 'ok' : conf === 'MEDIUM' ? 'warn' : 'neutral';
+    const confEl = document.getElementById('exp-confidence-badge');
+    if (confEl) {
+      confEl.className = `badge badge--${confClass}`;
+      confEl.textContent = `CONFIDENCE: ${conf}`;
+    }
+
+    // Format Badge
+    const fmtEl = document.getElementById('exp-format-badge');
+    if (fmtEl) {
+      fmtEl.className = 'badge badge--accent';
+      fmtEl.textContent = `FORMAT: ${docFormat}`;
+    }
+
+    // Verdict Icon
+    const iconEl = document.getElementById('exp-verdict-icon');
+    if (iconEl) {
+      iconEl.textContent = verdict === 'AUTHENTIC' ? '✓' : verdict === 'TAMPERED' ? '✕' : '⚠';
+      iconEl.style.color = verdict === 'AUTHENTIC' ? 'var(--ok)' : verdict === 'TAMPERED' ? 'var(--danger)' : 'var(--warn)';
+    }
+
+    // Final Reason & Summary
+    const reasonEl = document.getElementById('exp-final-reason-text');
+    if (reasonEl) {
+      reasonEl.textContent = exp.final_reason || (
+        verdict === 'AUTHENTIC'
+          ? `QuantumTrust classified this ${docFormat} file as AUTHENTIC because the digital signature was successfully verified, the signed content passed integrity validation, and no significant security anomalies were detected.`
+          : verdict === 'TAMPERED'
+          ? `QuantumTrust classified this ${docFormat} file as TAMPERED because the cryptographic signature verification failed for the signed content.`
+          : `QuantumTrust classified this ${docFormat} file as SUSPICIOUS because cryptographic or certificate security anomalies prevent an authentic certification.`
+      );
+    }
+
+    const sumEl = document.getElementById('exp-summary-text');
+    if (sumEl) {
+      sumEl.textContent = exp.summary || `Executive summary: Document classified as ${verdict} with ${conf} confidence.`;
+    }
+
+    // Key Decision Factors
+    const factorsGrid = document.getElementById('exp-factors-grid');
+    if (factorsGrid) {
+      const factors = exp.decision_factors ?? [];
+      if (factors.length === 0) {
+        // Fallback factors
+        factorsGrid.innerHTML = `
+          <div style="background: var(--bg-surface); border: 1px solid var(--border); border-left: 3px solid ${verdict === 'AUTHENTIC' ? 'var(--ok)' : 'var(--danger)'}; border-radius: 4px; padding: var(--space-3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:0.6875rem; font-weight:600; color:var(--text-secondary);">CRYPTOGRAPHIC STATUS</span>
+              <span class="badge badge--${vClass}" style="font-size:0.625rem;">${verdict}</span>
+            </div>
+            <div style="font-size:var(--text-xs); color:var(--text-primary); line-height:1.4;">${exp.final_reason || 'Cryptographic verification evaluated.'}</div>
+          </div>
+        `;
+      } else {
+        factorsGrid.innerHTML = factors.map(f => {
+          const fStatus = (f.status || 'PASS').toUpperCase();
+          const fImpact = (f.impact || 'MEDIUM').toUpperCase();
+          const fBadgeClass = fStatus === 'PASS' ? 'ok' : (fStatus === 'FAIL' || fStatus === 'LOCALIZED') ? 'danger' : (fStatus === 'WARNING' || fStatus === 'SUSPICIOUS') ? 'warn' : 'neutral';
+          const fBorderColor = fStatus === 'PASS' ? 'var(--ok)' : (fStatus === 'FAIL' || fStatus === 'LOCALIZED') ? 'var(--danger)' : (fStatus === 'WARNING' || fStatus === 'SUSPICIOUS') ? 'var(--warn)' : 'var(--border)';
+
+          return `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border); border-left: 3px solid ${fBorderColor}; border-radius: 4px; padding: var(--space-3);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:6px;">
+                <span style="font-family:'IBM Plex Mono',monospace; font-size:0.6875rem; font-weight:600; color:var(--text-secondary);">${f.factor?.replace(/_/g, ' ')}</span>
+                <div style="display:flex; gap:4px; align-items:center;">
+                  <span class="badge badge--neutral" style="font-size:0.5625rem;">${fImpact}</span>
+                  <span class="badge badge--${fBadgeClass}" style="font-size:0.625rem;">${fStatus}</span>
+                </div>
+              </div>
+              <div style="font-size:var(--text-xs); color:var(--text-primary); line-height:1.4;">${f.explanation}</div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Why Not Authentic Box
+    const whyNotBox = document.getElementById('exp-why-not-authentic-box');
+    const whyNotList = document.getElementById('exp-why-not-list');
+    if (whyNotBox && whyNotList) {
+      const whyNotItems = exp.why_not_authentic ?? [];
+      if (verdict !== 'AUTHENTIC' && whyNotItems.length > 0) {
+        whyNotBox.style.display = 'block';
+        whyNotList.innerHTML = whyNotItems.map((item, idx) => `
+          <li style="display:flex; align-items:flex-start; gap:8px; font-size:var(--text-xs); color:var(--text-primary); line-height:1.4;">
+            <span style="color:var(--danger); font-weight:bold; font-family:'IBM Plex Mono',monospace; font-size:0.75rem;">${idx + 1}.</span>
+            <span>${item}</span>
+          </li>
+        `).join('');
+      } else {
+        whyNotBox.style.display = 'none';
+      }
+    }
+
+    // What Would Change Box
+    const whatChangeBox = document.getElementById('exp-what-would-change-box');
+    const whatChangeText = document.getElementById('exp-what-would-change-text');
+    if (whatChangeBox && whatChangeText) {
+      if (verdict !== 'AUTHENTIC' && exp.what_would_change_verdict) {
+        whatChangeBox.style.display = 'block';
+        whatChangeText.textContent = exp.what_would_change_verdict;
+      } else {
+        whatChangeBox.style.display = 'none';
+      }
+    }
+
+    // Verification Trace Pipeline
+    const traceEl = document.getElementById('exp-trace-list');
+    if (traceEl) {
+      const steps = exp.verification_steps ?? [];
+      if (steps.length === 0) {
+        traceEl.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace; font-size:var(--text-xs); color:var(--text-muted);">No trace steps recorded.</div>`;
+      } else {
+        traceEl.innerHTML = steps.map((st, idx) => {
+          const status = (st.status || 'PASS').toUpperCase();
+          const sIcon = status === 'PASS' ? '✓' : status === 'FAIL' ? '✕' : (status === 'WARNING' || status === 'SUSPICIOUS') ? '⚠' : '—';
+          const sColor = status === 'PASS' ? 'var(--ok)' : status === 'FAIL' ? 'var(--danger)' : (status === 'WARNING' || status === 'SUSPICIOUS') ? 'var(--warn)' : 'var(--text-muted)';
+          const stepNum = String(idx + 1).padStart(2, '0');
+          const stepId = st.step_id || st.id || `step-${idx}`;
+          const drawerId = `trace-drawer-${idx}`;
+          const hasDetails = Boolean(st.technical_detail || st.technical_details || (st.evidence && st.evidence.length > 0));
+
+          return `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: 3px solid ${sColor}; border-radius: 4px; padding: var(--space-3); transition: background 0.15s ease;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div style="display:flex; align-items:flex-start; gap:8px; flex-grow:1;">
+                  <span style="color:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:0.6875rem; font-weight:600; flex-shrink:0;">${stepNum}</span>
+                  <span style="color:${sColor}; font-weight:bold; flex-shrink:0; font-size:0.875rem; width:14px; text-align:center;">${sIcon}</span>
+                  <div style="flex-grow:1;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                      <span style="color:var(--text-primary); font-weight:600; font-size:var(--text-xs); font-family:'Inter',sans-serif;">${st.title || st.check}</span>
+                      ${st.observed_value ? `<span style="font-family:'IBM Plex Mono',monospace; font-size:0.6875rem; color:var(--text-secondary); background:var(--bg-raised); padding:1px 5px; border-radius:3px;">${st.observed_value}</span>` : ''}
+                    </div>
+                    ${st.explanation ? `<div style="color:var(--text-secondary); font-size:0.6875rem; margin-top:3px; line-height:1.4;">${st.explanation}</div>` : ''}
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <span class="badge badge--${status === 'PASS' ? 'ok' : status === 'FAIL' ? 'danger' : (status === 'WARNING' || status === 'SUSPICIOUS') ? 'warn' : 'neutral'}" style="font-size:0.625rem;">
+                    ${status}
+                  </span>
+                  ${hasDetails ? `<button class="btn btn-secondary btn-sm" style="padding:1px 4px; font-size:0.625rem; font-family:'IBM Plex Mono',monospace; cursor:pointer;" onclick="toggleTraceDrawer('${drawerId}')">Details</button>` : ''}
+                </div>
+              </div>
+
+              <!-- Collapsible Technical Detail Drawer -->
+              ${hasDetails ? `
+                <div id="${drawerId}" style="display:none; margin-top:var(--space-2); padding-top:var(--space-2); border-top:1px dashed var(--border-subtle); font-family:'IBM Plex Mono',monospace; font-size:0.6875rem; color:var(--text-muted);">
+                  ${st.technical_detail || st.technical_details ? `<div><span style="color:var(--text-secondary); font-weight:600;">Technical:</span> ${st.technical_detail || st.technical_details}</div>` : ''}
+                  ${st.expected_condition ? `<div style="margin-top:2px;"><span style="color:var(--text-secondary); font-weight:600;">Expected:</span> ${st.expected_condition}</div>` : ''}
+                  ${st.evidence && st.evidence.length ? `<div style="margin-top:2px;"><span style="color:var(--text-secondary); font-weight:600;">Evidence:</span> ${st.evidence.join('; ')}</div>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Granular Evidence Inventory
+    window.__qt_all_evidence = exp.evidence ?? [];
+    renderFilteredEvidence('ALL');
+
+    // Limitations Box
+    const limBox = document.getElementById('exp-limitations-box');
+    const limList = document.getElementById('exp-limitations-list');
+    if (limBox && limList) {
+      const limitations = exp.limitations ?? [];
+      if (limitations.length > 0) {
+        limBox.style.display = 'block';
+        limList.innerHTML = limitations.map(lim => `
+          <div style="display:flex; align-items:flex-start; gap:6px; font-size:var(--text-xs); color:var(--text-muted); font-family:'IBM Plex Mono',monospace; line-height:1.4;">
+            <span style="color:var(--text-secondary);">ℹ</span>
+            <span>${lim}</span>
+          </div>
+        `).join('');
+      } else {
+        limBox.style.display = 'none';
+      }
+    }
+
+    // Methodology Text
+    const methEl = document.getElementById('exp-methodology-text');
+    if (methEl && exp.methodology) {
+      methEl.textContent = exp.methodology;
+    }
+  }
+
+  function renderFilteredEvidence(filterType) {
+    const listEl = document.getElementById('exp-evidence-items-list');
+    if (!listEl) return;
+    const allEvidence = window.__qt_all_evidence || [];
+
+    let filtered = allEvidence;
+    if (filterType === 'FAIL') {
+      filtered = allEvidence.filter(e => e.status === 'FAIL');
+    } else if (filterType === 'WARN') {
+      filtered = allEvidence.filter(e => e.status === 'WARNING' || e.status === 'INFO');
+    } else if (filterType === 'PASS') {
+      filtered = allEvidence.filter(e => e.status === 'PASS');
+    }
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace; font-size:var(--text-xs); color:var(--text-muted); padding:8px 0; text-align:center;">No evidence items matching filter [${filterType}].</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(item => {
+      const status = (item.status || 'INFO').toUpperCase();
+      const sBadge = status === 'PASS' ? 'ok' : status === 'FAIL' ? 'danger' : status === 'WARNING' ? 'warn' : 'neutral';
+      const imp = (item.importance || 'MEDIUM').toUpperCase();
+
+      return `
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 6px 8px; font-family:'IBM Plex Mono',monospace;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; gap:6px;">
+            <span style="font-size:0.6875rem; font-weight:600; color:var(--text-primary);">${item.title || item.code || item.evidence_id || 'Evidence'}</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <span class="badge badge--neutral" style="font-size:0.5625rem;">${item.category || 'GENERAL'}</span>
+              <span class="badge badge--${sBadge}" style="font-size:0.625rem;">${status}</span>
+            </div>
+          </div>
+          <div style="font-size:0.6875rem; color:var(--text-secondary); line-height:1.35; font-family:'Inter',sans-serif;">${item.description || item.reason || item.value || 'Observed condition.'}</div>
+          ${item.value && item.value !== item.description ? `<div style="font-size:0.625rem; color:var(--text-muted); margin-top:2px;">Value: ${item.value}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Expose global filter handler
+  (window as any).filterEvidence = function(filterType: string) {
+    renderFilteredEvidence(filterType);
+  };
+
+  (window as any).toggleTraceDrawer = function(id: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+    }
+  };
 
   function renderTamperingLocalization(r) {
     const loc = r.tampering_localization ?? {};
