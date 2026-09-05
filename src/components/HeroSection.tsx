@@ -224,7 +224,7 @@ export default function HeroSection() {
             initial="initial"
             animate="animate"
           >
-            <p className="text-xs sm:text-sm md:text-[14px] font-semibold tracking-[0.28em] uppercase text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-[14px] font-bold tracking-[0.28em] uppercase text-black dark:text-white leading-relaxed drop-shadow-sm">
               SECURE TODAY.<br />
               TRUST TOMORROW.
             </p>
@@ -277,7 +277,7 @@ export default function HeroSection() {
             initial="initial"
             animate="animate"
           >
-            <p className="text-xs sm:text-sm md:text-[14px] font-semibold tracking-[0.26em] uppercase text-neutral-700 dark:text-neutral-300 leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-[14px] font-bold tracking-[0.26em] uppercase text-black dark:text-white leading-relaxed drop-shadow-sm">
               NEXT-GEN DIGITAL SIGNATURE<br />
               SECURITY & VERIFICATION
             </p>
