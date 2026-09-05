@@ -1,0 +1,325 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title={`Analysis ${id}`} description={`Full security analysis report for document ID ${id}.`}>
+  <Navigation slot="sidebar" />
+
+  <div id="loading-state" aria-live="polite">
+    <div class="empty-state">
+      <span class="empty-state-icon" aria-hidden="true">⋯</span>
+      <p class="empty-state-title">Loading analysis…</p>
+    </div>
+  </div>
+
+  <div id="error-state" style="display:none;" aria-live="assertive">
+    <div class="error-banner" id="error-msg"></div>
+    <div style="margin-top:16px;">
+      <a href="/dashboard" class="btn btn-secondary btn-sm">Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div id="analysis-content" style="display:none;">
+
+    <!-- Page header (populated dynamically) -->
+    <div class="page-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 class="page-title" id="doc-filename-title">Analysis</h1>
+          <p class="page-subtitle" id="analysis-id-sub"></p>
+        </div>
+        <div id="verdict-badge-header"></div>
+      </div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="section">
+      <div id="verdict-display"></div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Left column -->
+      <div class="detail-col">
+
+        <div class="section">
+          <div class="section-title">Document</div>
+          <div class="card">
+            <dl class="kv-list" id="doc-info"></dl>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Digital Signature</div>
+          <div class="card">
+            <dl class="kv-list" id="sig-info"></dl>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Cryptography</div>
+          <div class="card">
+            <dl class="kv-list" id="crypto-info"></dl>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Document Integrity</div>
+          <div class="card">
+            <dl class="kv-list" id="integrity-info"></dl>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column -->
+      <div class="detail-col">
+
+        <div class="section">
+          <div class="section-title">Certificate</div>
+          <div class="card">
+            <dl class="kv-list" id="cert-info"></dl>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Duplicate Detection</div>
+          <div class="card">
+            <dl class="kv-list" id="dup-info"></dl>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Threat Analysis</div>
+          <div class="card">
+            <div class="threat-score-row">
+              <span class="threat-num" id="threat-num">—</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:var(--text-sm);color:var(--text-muted)">&nbsp;/ 100</span>
+              <span id="threat-badge" style="margin-left:8px;"></span>
+            </div>
+            <div class="threat-score-bar" style="margin-top:8px;margin-bottom:12px;">
+              <div class="threat-score-fill" id="threat-fill" style="width:0%"></div>
+            </div>
+            <div id="threats-list"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" style="display:flex;align-items:center;gap:8px;">
+            QUANTUM-INSPIRED ANALYSIS
+            <span class="badge badge--accent" style="font-size:0.625rem;">Classical Simulation</span>
+          </div>
+          <div class="quantum-grid" id="quantum-grid"></div>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:10px;font-family:'IBM Plex Mono',monospace;">
+            Classical simulation of quantum-inspired mathematical representations used as an additional security signal.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-secondary" id="report-btn">Generate Report</button>
+      <a href="/security" id="security-link" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        Open Security Dashboard
+      </a>
+      <a href="/dashboard" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        Back to Dashboard
+      </a>
+      <button class="btn btn-danger" id="delete-analysis-btn" style="margin-left:auto;cursor:pointer;">
+        Delete Analysis
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ analysisId: id }}>
+  const API = 'http://localhost:8000';
+
+  async function load() {
+    try {
+      const res = await fetch(`${API}/api/analysis/${analysisId}`);
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(e.detail ?? 'Not found');
+      }
+      const r = await res.json();
+      document.getElementById('loading-state').style.display = 'none';
+      render(r);
+      document.getElementById('analysis-content').style.display = 'block';
+    } catch (err) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-msg').textContent = `Failed to load analysis: ${err.message}`;
+      document.getElementById('error-state').style.display = 'block';
+    }
+  }
+
+  function render(r) {
+    const doc = r.document ?? {};
+    document.getElementById('doc-filename-title').textContent = doc.filename ?? 'Analysis';
+    document.getElementById('analysis-id-sub').textContent = `Analysis ID: ${r.analysis_id ?? analysisId}`;
+
+    // Verdict
+    const verdict = (r.verdict ?? 'UNKNOWN').toUpperCase();
+    const vClass  = verdict === 'AUTHENTIC' ? 'authentic' : verdict === 'TAMPERED' ? 'tampered' : verdict === 'SUSPICIOUS' ? 'suspicious' : '';
+    const vBadge  = verdict === 'AUTHENTIC' ? 'ok' : verdict === 'TAMPERED' ? 'danger' : verdict === 'SUSPICIOUS' ? 'warn' : 'neutral';
+    document.getElementById('verdict-badge-header').innerHTML = `<span class="badge badge--${vBadge}">${verdict}</span>`;
+    document.getElementById('verdict-display').innerHTML = `
+      <div class="verdict-banner ${vClass}" role="status">
+        <span class="verdict-word">${verdict}</span>
+        <div class="verdict-sublabel">Final Security Verdict</div>
+      </div>`;
+
+    // Document
+    document.getElementById('doc-info').innerHTML = kvRows([
+      ['Filename', doc.filename ?? '—'],
+      ['File Size', doc.file_size ? formatBytes(doc.file_size) : '—'],
+      ['PDF Version', doc.pdf_version ?? '—'],
+      ['Fingerprint', doc.fingerprint ?? 'Not available', true],
+    ]);
+
+    // Signature
+    const s = r.signature ?? {};
+    const sigS = s.status ?? 'UNKNOWN';
+    const sigC = sigS === 'VALID' ? 'ok' : sigS === 'INVALID' ? 'danger' : 'neutral';
+    document.getElementById('sig-info').innerHTML = kvRows([
+      ['Present', s.present ? 'Yes' : 'No'],
+      ['Count', s.count != null ? String(s.count) : '—'],
+      ['Status', `<span class="badge badge--${sigC}">${sigS}</span>`],
+      ['Type', s.signature_type ?? '—'],
+    ]);
+
+    // Crypto
+    document.getElementById('crypto-info').innerHTML = kvRows([
+      ['Digest Algorithm',     s.digest_algorithm     ?? '—', true],
+      ['Signature Algorithm',  s.signature_algorithm  ?? '—', true],
+      ['Public Key Algorithm', s.public_key_algorithm ?? '—', true],
+      ['Key Size',             s.key_size != null ? `${s.key_size} bits` : '—'],
+    ]);
+
+    // Certificate
+    const c = r.certificate ?? {};
+    const tS = c.trust_status ?? 'Unknown';
+    const tC = tS === 'TRUSTED' ? 'ok' : tS === 'UNTRUSTED' ? 'danger' : 'neutral';
+    document.getElementById('cert-info').innerHTML = kvRows([
+      ['Subject', c.subject ?? '—'],
+      ['Issuer',  c.issuer  ?? '—'],
+      ['Serial',  c.serial_number ?? '—', true],
+      ['Valid From',  c.valid_from  ?? '—'],
+      ['Valid Until', c.valid_until ?? '—'],
+      ['Trust Status', `<span class="badge badge--${tC}">${tS}</span>`],
+    ]);
+
+    // Integrity
+    const intg = r.integrity ?? {};
+    const iS  = intg.status ?? 'UNKNOWN';
+    const iC  = iS === 'VERIFIED' ? 'ok' : iS === 'FAILED' ? 'danger' : 'neutral';
+    document.getElementById('integrity-info').innerHTML = kvRows([
+      ['Status', `<span class="badge badge--${iC}">${iS}</span>`],
+      ['Modification', intg.modification_status ?? '—'],
+      ['ByteRange', Array.isArray(intg.byte_range) && intg.byte_range.length
+          ? intg.byte_range.join(', ') : '—', true],
+    ]);
+
+    // Duplicate
+    const dup = r.duplicate ?? {};
+    document.getElementById('dup-info').innerHTML = kvRows([
+      ['Is Duplicate', dup.is_duplicate ? 'Yes' : 'No'],
+      ['Match Type',   dup.match_type ?? 'None'],
+    ]);
+
+    // Threat
+    const sec   = r.security ?? {};
+    const score = sec.threat_score ?? 0;
+    const level = (sec.threat_level ?? 'UNKNOWN').toUpperCase();
+    const lClass = level === 'LOW' ? 'ok' : level === 'CRITICAL' ? 'danger' : 'warn';
+    const fColor = score < 30 ? 'var(--ok)' : score < 60 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById('threat-num').textContent = String(score);
+    document.getElementById('threat-badge').innerHTML = `<span class="badge badge--${lClass}">${level}</span>`;
+    document.getElementById('threat-fill').style.width = `${score}%`;
+    document.getElementById('threat-fill').style.background = fColor;
+
+    const threats = sec.detected_threats ?? [];
+    document.getElementById('threats-list').innerHTML = threats.length === 0
+      ? `<p style="font-family:'IBM Plex Mono',monospace;font-size:var(--text-xs);color:var(--text-muted);">No threats detected</p>`
+      : `<ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">${threats.map(t =>
+          `<li style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:var(--text-xs);color:var(--danger);">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--danger);flex-shrink:0;display:inline-block"></span>${t}
+           </li>`).join('')}</ul>`;
+
+    // Quantum
+    const q = r.quantum_analysis ?? {};
+    const qMetrics = ['state_similarity','correlation_score','disturbance_score','anomaly_distance','entropy'];
+    const qLabels  = ['State Similarity','Correlation Score','Disturbance Score','Anomaly Distance','Entropy'];
+    document.getElementById('quantum-grid').innerHTML = qMetrics.map((k, i) => {
+      const v = q[k]; const d = v != null ? Number(v).toFixed(4) : '—';
+      return `<div class="quantum-metric">
+        <span class="quantum-metric-label">${qLabels[i]}</span>
+        <span class="quantum-metric-value">${d}</span>
+      </div>`;
+    }).join('');
+
+    // Report button & security link
+    document.getElementById('report-btn').onclick = () =>
+      window.open(`${API}/api/analysis/${r.analysis_id}/report`, '_blank', 'noopener,noreferrer');
+    document.getElementById('security-link').href = `/security?id=${r.analysis_id}`;
+
+    // Delete button
+    const delBtn = document.getElementById('delete-analysis-btn');
+    if (delBtn) {
+      delBtn.onclick = async () => {
+        const confirmed = window.confirm(`Are you sure you want to delete this analysis (${r.document?.filename || r.analysis_id})?`);
+        if (!confirmed) return;
+        try {
+          const res = await fetch(`${API}/api/analysis/${r.analysis_id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error(`Delete failed: HTTP ${res.status}`);
+          alert('Analysis deleted successfully.');
+          window.location.href = '/analysis';
+        } catch (err) {
+          alert('Error deleting analysis: ' + (err.message || err));
+        }
+      };
+    }
+  }
+
+  function kvRows(pairs) {
+    return pairs.map(([k, v, isMono]) =>
+      `<dt class="kv-key">${k}</dt><dd class="kv-value${isMono ? ' mono' : ''}">${v}</dd>`
+    ).join('');
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  load();
+</script>
+
+<style>
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .detail-col { display: flex; flex-direction: column; }
+  .threat-score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .threat-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  @media (max-width: 900px) {
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+</style>

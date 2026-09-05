@@ -1,0 +1,239 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+---
+
+<Layout title="Dashboard" description="QuantumTrust — Analysis dashboard with system-wide statistics and recent verification history.">
+  <Navigation slot="sidebar" />
+
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">System-wide signature verification statistics and recent analysis history.</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <section class="section" aria-label="Summary statistics">
+    <div class="grid-stats" id="stats-grid">
+      <div class="card stat-card" id="stat-analyzed">
+        <span class="card-label">Documents Analyzed</span>
+        <span class="card-value stat-value" data-stat="total">0</span>
+      </div>
+      <div class="card stat-card" id="stat-valid">
+        <span class="card-label">Valid Signatures</span>
+        <span class="card-value stat-value" style="color:var(--ok)" data-stat="valid">0</span>
+      </div>
+      <div class="card stat-card" id="stat-tampered">
+        <span class="card-label">Tampered Documents</span>
+        <span class="card-value stat-value" data-stat="tampered">0</span>
+      </div>
+      <div class="card stat-card" id="stat-suspicious">
+        <span class="card-label">Suspicious Documents</span>
+        <span class="card-value stat-value" data-stat="suspicious">0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="section">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div class="card-title" style="margin-bottom:4px;">Verify a Document</div>
+          <p style="font-size:var(--text-sm);color:var(--text-secondary);margin:0;max-width:none;">
+            Upload a digitally signed PDF to start a full cryptographic analysis.
+          </p>
+        </div>
+        <a href="/verify" class="btn btn-primary">
+          Upload Signed File
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Analyses Table -->
+  <section class="section" aria-label="Recent analyses">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div class="section-title" style="margin-bottom:0;">Recent Analyses</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button id="clear-all-dash-btn" class="btn btn-danger btn-sm" style="display:none;align-items:center;gap:6px;cursor:pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          <span>Clear All History</span>
+        </button>
+      </div>
+    </div>
+    <div class="table-wrapper" id="analyses-table-container">
+      <!-- Loaded by client script -->
+      <div class="empty-state" id="table-loading">
+        <span class="empty-state-icon">⋯</span>
+        <p class="empty-state-title">Loading recent analyses…</p>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  const API = 'http://localhost:8000';
+
+  interface Analysis {
+    analysis_id: string;
+    document: { filename: string; file_size: number; pdf_version: string | null };
+    signature: { present: boolean; status: string | null };
+    security: { threat_level: string | null; threat_score: number | null };
+    verdict: string | null;
+    created_at: string;
+  }
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function badgeClass(verdict: string | null): string {
+    if (!verdict) return 'badge--neutral';
+    const v = verdict.toUpperCase();
+    if (v === 'AUTHENTIC') return 'badge--ok';
+    if (v === 'TAMPERED')  return 'badge--danger';
+    if (v === 'SUSPICIOUS') return 'badge--warn';
+    return 'badge--neutral';
+  }
+
+  function threatBadge(level: string | null): string {
+    if (!level) return 'badge--neutral';
+    const l = level.toUpperCase();
+    if (l === 'LOW')      return 'badge--ok';
+    if (l === 'MEDIUM')   return 'badge--warn';
+    if (l === 'HIGH')     return 'badge--warn';
+    if (l === 'CRITICAL') return 'badge--danger';
+    return 'badge--neutral';
+  }
+
+  async function loadDashboard() {
+    const clearBtn = document.getElementById('clear-all-dash-btn');
+    try {
+      const res = await fetch(`${API}/api/analyses`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data: Analysis[] = await res.json();
+
+      // Update stats
+      const total     = data.length;
+      const valid     = data.filter(d => d.signature?.status === 'VALID').length;
+      const tampered  = data.filter(d => d.verdict?.toUpperCase() === 'TAMPERED').length;
+      const suspicious= data.filter(d => d.verdict?.toUpperCase() === 'SUSPICIOUS').length;
+
+      (document.querySelector('[data-stat="total"]') as HTMLElement).textContent = String(total);
+      (document.querySelector('[data-stat="valid"]') as HTMLElement).textContent = String(valid);
+      (document.querySelector('[data-stat="tampered"]') as HTMLElement).textContent = String(tampered);
+      (document.querySelector('[data-stat="suspicious"]') as HTMLElement).textContent = String(suspicious);
+
+      const container = document.getElementById('analyses-table-container')!;
+
+      if (data.length === 0) {
+        if (clearBtn) clearBtn.style.display = 'none';
+        container.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-state-icon">📄</span>
+            <p class="empty-state-title">No analyses yet</p>
+            <p class="empty-state-desc">Upload a signed PDF from the Verify page to get started.</p>
+          </div>`;
+        return;
+      }
+
+      if (clearBtn) {
+        clearBtn.style.display = 'inline-flex';
+        clearBtn.onclick = async () => {
+          const confirmed = window.confirm('Are you sure you want to delete ALL analysis history? This action cannot be undone.');
+          if (!confirmed) return;
+          try {
+            const clearRes = await fetch(`${API}/api/analyses`, { method: 'DELETE' });
+            if (!clearRes.ok) throw new Error(`Failed to clear: HTTP ${clearRes.status}`);
+            loadDashboard();
+          } catch (err: any) {
+            alert('Error clearing history: ' + (err.message || err));
+          }
+        };
+      }
+
+      const rows = data.slice(0, 50).map((a: Analysis) => {
+        const date = new Date(a.created_at).toLocaleString();
+        const verdict = a.verdict ?? 'Unknown';
+        const threat = a.security?.threat_level ?? '—';
+        const fname = a.document?.filename || 'Document';
+        return `
+          <tr id="dash-row-${a.analysis_id}">
+            <td><a href="/analysis/${a.analysis_id}" target="_blank" rel="noopener noreferrer" style="color:var(--text-accent)">${fname}</a></td>
+            <td class="mono-cell">${formatBytes(a.document?.file_size || 0)}</td>
+            <td><span class="badge ${badgeClass(verdict)}">${verdict}</span></td>
+            <td><span class="badge ${threatBadge(threat)}">${threat}</span></td>
+            <td class="mono-cell num-cell">${a.security?.threat_score ?? '—'}</td>
+            <td style="font-size:var(--text-xs);color:var(--text-muted)">${date}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <a href="/analysis/${a.analysis_id}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">View</a>
+                <button class="btn btn-danger btn-sm dash-del-btn" data-id="${a.analysis_id}" data-file="${fname.replace(/"/g, '&quot;')}" style="cursor:pointer;" title="Delete this analysis">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      container.innerHTML = `
+        <table class="data-table" aria-label="Recent analyses">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Size</th>
+              <th>Verdict</th>
+              <th>Threat Level</th>
+              <th>Score</th>
+              <th>Analyzed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+
+      container.querySelectorAll('.dash-del-btn').forEach((btn: any) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          const file = btn.getAttribute('data-file');
+          if (!id) return;
+          const confirmed = window.confirm(`Delete analysis for "${file}"?`);
+          if (!confirmed) return;
+          try {
+            const res = await fetch(`${API}/api/analysis/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`Delete failed: HTTP ${res.status}`);
+            loadDashboard();
+          } catch (err: any) {
+            alert('Error deleting: ' + (err.message || err));
+          }
+        });
+      });
+    } catch (err) {
+      if (clearBtn) clearBtn.style.display = 'none';
+      const container = document.getElementById('analyses-table-container')!;
+      container.innerHTML = `
+        <div class="error-banner" style="margin:16px;">
+          Backend unavailable — start the QuantumTrust API server to load analysis history.
+        </div>`;
+      // Set stat dashes
+      ['total','valid','tampered','suspicious'].forEach(s => {
+        const el = document.querySelector(`[data-stat="${s}"]`) as HTMLElement;
+        if (el) el.textContent = '—';
+      });
+    }
+  }
+
+  loadDashboard();
+</script>
+
+<style>
+  .stat-card {
+    min-width: 0;
+  }
+  .stat-value {
+    display: block;
+    margin-top: var(--space-2);
+  }
+</style>

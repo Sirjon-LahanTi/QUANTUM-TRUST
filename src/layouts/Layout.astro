@@ -1,23 +1,251 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'QuantumTrust',
+  description = 'Quantum-Inspired Digital Signature Security — Professional PDF signature verification and document integrity analysis.',
+} = Astro.props;
+
+const fullTitle = title === 'QuantumTrust' ? title : `${title} — QuantumTrust`;
+const currentPath = Astro.url.pathname;
+const isHome = currentPath === '/' || currentPath === '';
+---
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="QuantumTrust" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>{fullTitle}</title>
+    <script is:inline>
+      (function() {
+        const storedTheme = localStorage.getItem('qt-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- Mobile top bar -->
+    <div class="mobile-topbar" id="mobile-topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger" id="hamburger-btn" aria-label="Open navigation" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--text-primary);">
+            <path d="M 5.5 12.2 C 5.5 7.6, 8.4 4.5, 12 4.5 C 15.6 4.5, 17.5 6.7, 17.5 8.4"/>
+            <path d="M 9.8 8.4 C 10.8 7.4, 12.7 7.4, 14.4 8.6 C 15.8 10.1, 16.3 12.5, 16.3 14.9"/>
+            <path d="M 5.3 14.8 L 5.31 14.8"/>
+            <path d="M 8.2 10.3 C 7.9 12.7, 7.7 15.1, 7.2 17.3"/>
+            <path d="M 10.1 10.8 C 10.1 12.5, 10.3 13.4, 10.3 14.9"/>
+            <path d="M 9.8 19 L 10.3 17"/>
+            <path d="M 12.2 10.3 C 13 10.6, 13.2 11.5, 13.2 13.4 L 13.2 16.1 C 13.2 17.3, 13 18, 13 19"/>
+            <path d="M 15.8 15.8 C 15.6 16.8, 15.6 17.5, 15.6 18.2"/>
+            <path d="M 18.7 10.6 L 18.7 14.9"/>
+          </svg>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.875rem;font-weight:600;color:var(--text-primary);">QuantumTrust</span>
+        </a>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle-btn js-theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark / light theme" style="padding:4px 8px;">
+          <svg class="theme-icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="theme-icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        {!isHome && (
+          <button class="header-back-btn js-back-btn" type="button" aria-label="Go back" title="Go back (Undo)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-layout">
+      <!-- Navigation sidebar -->
+      <slot name="sidebar" />
+
+      <!-- Main container with persistent topbar -->
+      <div class="main-column">
+        <!-- Persistent Top Bar with Back/Undo and Home link -->
+        <header class="app-topbar">
+          <div class="topbar-left">
+            {!isHome ? (
+              <button class="header-back-btn js-back-btn" type="button" aria-label="Go back to previous page" title="Go back / Undo (Alt+Left)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="19" y1="12" x2="5" y2="12"/>
+                  <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                <span>Back</span>
+              </button>
+            ) : (
+              <span class="system-status-indicator">
+                <span class="status-dot ok"></span>
+                <span>SYSTEM ONLINE</span>
+              </span>
+            )}
+            <a href="/" class="topbar-home-link" title="Return to Homepage">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>Home</span>
+            </a>
+          </div>
+
+          <!-- Top-Right Dark Mode Switch -->
+          <div class="topbar-right">
+            <button class="theme-toggle-btn js-theme-toggle" type="button" aria-label="Toggle dark/light theme" title="Toggle dark/light theme">
+              <svg class="theme-icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg class="theme-icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <span class="theme-text-label" style="font-size:var(--text-xs);">THEME</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="main-content" id="main-content">
+          <div class="content-wrapper">
+            <slot />
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Theme toggling and state synchronization
+      function updateThemeUI() {
+        const isDark = document.documentElement.classList.contains('dark') ||
+          document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        document.querySelectorAll('.js-theme-toggle').forEach(btn => {
+          const sun = btn.querySelector('.theme-icon-sun') as HTMLElement | null;
+          const moon = btn.querySelector('.theme-icon-moon') as HTMLElement | null;
+          const label = btn.querySelector('.theme-text-label') as HTMLElement | null;
+          if (sun && moon) {
+            if (isDark) {
+              sun.style.display = 'inline-block';
+              moon.style.display = 'none';
+              if (label) label.textContent = 'LIGHT';
+            } else {
+              sun.style.display = 'none';
+              moon.style.display = 'inline-block';
+              if (label) label.textContent = 'DARK';
+            }
+          }
+        });
+      }
+
+      function toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark') ||
+          document.documentElement.getAttribute('data-theme') === 'dark';
+        const nextDark = !isDark;
+        if (nextDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+          try { localStorage.setItem('qt-theme', 'dark'); } catch (_) {}
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+          try { localStorage.setItem('qt-theme', 'light'); } catch (_) {}
+        }
+        updateThemeUI();
+        window.dispatchEvent(new Event('themechange'));
+      }
+
+      document.querySelectorAll('.js-theme-toggle').forEach(btn => {
+        btn.addEventListener('click', toggleTheme);
+      });
+
+      window.addEventListener('themechange', updateThemeUI);
+      window.addEventListener('storage', updateThemeUI);
+      updateThemeUI();
+
+      // Mobile sidebar toggle
+      const hamburger = document.getElementById('hamburger-btn');
+      const overlay   = document.getElementById('sidebar-overlay');
+      const sidebar   = document.querySelector('.sidebar') as HTMLElement | null;
+
+      function openSidebar() {
+        sidebar?.classList.add('open');
+        overlay?.classList.add('visible');
+        hamburger?.setAttribute('aria-expanded', 'true');
+      }
+      function closeSidebar() {
+        sidebar?.classList.remove('open');
+        overlay?.classList.remove('visible');
+        hamburger?.setAttribute('aria-expanded', 'false');
+      }
+
+      hamburger?.addEventListener('click', () => {
+        const isOpen = sidebar?.classList.contains('open');
+        isOpen ? closeSidebar() : openSidebar();
+      });
+      overlay?.addEventListener('click', closeSidebar);
+
+      // Back / Undo Button functionality
+      document.querySelectorAll('.js-back-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+            window.history.back();
+          } else {
+            window.location.href = '/';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

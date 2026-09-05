@@ -1,0 +1,1677 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+---
+
+<Layout title="Quantum Analysis" description="Simulate and analyze quantum states, circuits, Bloch sphere geometry, and cryptographic simulation metrics.">
+  <Navigation slot="sidebar" />
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-flex">
+      <div>
+        <h1 class="page-title">Quantum Analysis</h1>
+        <p class="page-subtitle">Simulate and analyze quantum states, circuits, and measurements.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" id="learn-more-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Learn More
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive KPI Metrics Cards -->
+  <section class="section" aria-label="Quantum Simulation Metrics">
+    <div class="metrics-grid">
+      <!-- Qubits -->
+      <div class="card metric-card">
+        <div class="metric-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Qubits</span>
+          <div class="metric-val-row">
+            <span class="metric-val" id="metric-qubits">1</span>
+          </div>
+          <span class="metric-sub">Active qubits</span>
+        </div>
+      </div>
+
+      <!-- Gates Applied -->
+      <div class="card metric-card">
+        <div class="metric-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Gates Applied</span>
+          <div class="metric-val-row">
+            <span class="metric-val" id="metric-gates">2</span>
+          </div>
+          <span class="metric-sub">In current circuit</span>
+        </div>
+      </div>
+
+      <!-- State Fidelity -->
+      <div class="card metric-card">
+        <div class="metric-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">State Fidelity</span>
+          <div class="metric-val-row">
+            <span class="metric-val" id="metric-fidelity">99.8%</span>
+          </div>
+          <span class="metric-sub">Simulation accuracy</span>
+        </div>
+      </div>
+
+      <!-- Simulation Time -->
+      <div class="card metric-card">
+        <div class="metric-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Simulation Time</span>
+          <div class="metric-val-row">
+            <span class="metric-val" id="metric-time">0.12 s</span>
+          </div>
+          <span class="metric-sub">Last run</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Document State Preset Bar -->
+  <section class="section" style="margin-bottom: var(--space-6);">
+    <div class="card preset-card">
+      <div class="preset-flex">
+        <div class="preset-title-group">
+          <span class="preset-tag">State Preset</span>
+          <span class="preset-desc">Select a quantum state or load a document's verification security vector:</span>
+        </div>
+        <div class="preset-action-group">
+          <select id="preset-selector" class="preset-dropdown" aria-label="Select quantum state preset">
+            <option value="ground">Ground State |0⟩</option>
+            <option value="excited">Excited State |1⟩</option>
+            <option value="hadamard" selected>Hadamard Superposition (|0⟩ + |1⟩)/√2</option>
+            <option value="phase_y">Pauli-Y Superposition (|0⟩ + i|1⟩)/√2</option>
+            <option value="doc_authentic">Document: Authentic Baseline Vector</option>
+            <option value="doc_tampered">Document: Tampered State Vector</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workspace Grid -->
+  <div class="workspace-grid">
+
+    <!-- LEFT COLUMN: Qubit Visualization & Bloch Sphere -->
+    <div class="card workspace-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Qubit Visualization</h2>
+        <div class="tab-pill-group" role="tablist">
+          <button class="tab-pill active" id="tab-bloch" role="tab" aria-selected="true">Bloch Sphere</button>
+          <button class="tab-pill" id="tab-state" role="tab" aria-selected="false">State Vector</button>
+          <button class="tab-pill" id="tab-prob" role="tab" aria-selected="false">Probability</button>
+        </div>
+      </div>
+
+      <!-- Tab Content: Bloch Sphere View -->
+      <div id="view-bloch" class="view-panel">
+        <div class="bloch-layout">
+          <!-- 3D Canvas Container -->
+          <div class="bloch-canvas-wrap">
+            <canvas id="bloch-canvas" width="340" height="340"></canvas>
+            <div class="bloch-hint">Drag sphere to rotate in 3D</div>
+          </div>
+
+          <!-- State Math & Angles Inspector -->
+          <div class="state-inspector">
+            <div class="inspector-section">
+              <div class="inspector-title">State (|ψ⟩)</div>
+              <div class="state-eq-box">
+                <div class="state-row">
+                  <span class="state-symbol">α (|0⟩)</span>
+                  <span class="state-number" id="val-alpha">0.707 + 0.000i</span>
+                </div>
+                <div class="state-row">
+                  <span class="state-symbol">β (|1⟩)</span>
+                  <span class="state-number" id="val-beta">0.707 + 0.000i</span>
+                </div>
+                <div class="dirac-formula" id="val-dirac">
+                  |ψ⟩ = (|0⟩ + |1⟩) / √2
+                </div>
+              </div>
+            </div>
+
+            <div class="inspector-section" style="margin-top: var(--space-5);">
+              <div class="inspector-title">Angles</div>
+              <div class="angle-grid">
+                <div class="angle-item">
+                  <span class="angle-label">θ (Polar)</span>
+                  <span class="angle-val" id="val-theta">45.0°</span>
+                </div>
+                <div class="angle-item">
+                  <span class="angle-label">φ (Azimuth)</span>
+                  <span class="angle-val" id="val-phi">0.0°</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: State Vector Matrix View -->
+      <div id="view-state" class="view-panel" style="display:none;">
+        <div class="state-vector-container">
+          <div class="vector-header">Complex State Vector &amp; Density Matrix ρ = |ψ⟩⟨ψ|</div>
+          <div class="matrix-display-grid">
+            <div class="matrix-card">
+              <span class="matrix-title">Amplitudes Vector</span>
+              <div class="bracket-matrix" id="state-amplitudes-display">
+                [ 0.707107 + 0.000000i ]<br/>
+                [ 0.707107 + 0.000000i ]
+              </div>
+            </div>
+            <div class="matrix-card">
+              <span class="matrix-title">Density Matrix (2×2)</span>
+              <div class="bracket-matrix" id="density-matrix-display">
+                [ 0.5000  0.5000 ]<br/>
+                [ 0.5000  0.5000 ]
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Probability View -->
+      <div id="view-prob" class="view-panel" style="display:none;">
+        <div class="prob-view-container">
+          <div class="prob-card">
+            <div class="prob-header-row">
+              <span>|0⟩ Ground State Probability (|α|²)</span>
+              <span class="mono" id="prob-0-text">50.0%</span>
+            </div>
+            <div class="q-prob-bar-wrap">
+              <div class="q-prob-bar" id="prob-0-bar" style="width:50%; background: var(--text-primary);"></div>
+            </div>
+          </div>
+          <div class="prob-card" style="margin-top: var(--space-4);">
+            <div class="prob-header-row">
+              <span>|1⟩ Excited State Probability (|β|²)</span>
+              <span class="mono" id="prob-1-text">50.0%</span>
+            </div>
+            <div class="q-prob-bar-wrap">
+              <div class="q-prob-bar" id="prob-1-bar" style="width:50%; background: var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quantum Gate Control Toolbar -->
+      <div class="gate-toolbar">
+        <button class="gate-btn gate-btn--action" id="gate-reset" title="Reset to Ground State |0⟩">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          Reset
+        </button>
+        <button class="gate-btn" id="gate-x" title="Pauli-X (Bit-flip Gate)">X Gate</button>
+        <button class="gate-btn" id="gate-y" title="Pauli-Y Gate">Y Gate</button>
+        <button class="gate-btn" id="gate-z" title="Pauli-Z (Phase-flip Gate)">Z Gate</button>
+        <button class="gate-btn" id="gate-h" title="Hadamard Superposition Gate">H Gate</button>
+        <button class="gate-btn" id="gate-s" title="Phase S Gate">S Gate</button>
+        <button class="gate-btn gate-btn--measure" id="gate-measure" title="Perform Projective Measurement">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2"/>
+            <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+          </svg>
+          Measure
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Quantum Circuit & Measurement Results -->
+    <div class="right-stack">
+
+      <!-- Quantum Circuit Visualizer Card -->
+      <div class="card circuit-card">
+        <div class="circuit-header">
+          <h2 class="panel-title">Quantum Circuit</h2>
+          <button class="circuit-clear-btn" id="clear-circuit-btn" title="Clear all gates">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Clear
+          </button>
+        </div>
+
+        <!-- Wire Diagram -->
+        <div class="circuit-canvas-area">
+          <div class="wire-row">
+            <span class="qubit-label">q₀ &nbsp;|0⟩</span>
+            <div class="wire-line">
+              <div class="gates-sequence" id="circuit-gates-container">
+                <div class="circuit-gate-box gate-color-h">H</div>
+                <div class="circuit-gate-box gate-color-x">X</div>
+                <div class="circuit-gate-box gate-color-measure">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 19h18"/>
+                    <path d="M5 19a7 7 0 0 1 14 0"/>
+                    <line x1="12" y1="19" x2="16" y2="8"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="add-gate-banner" id="quick-add-gate-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Add Gate
+        </button>
+      </div>
+
+      <!-- Measurement Results & Histogram Card -->
+      <div class="card measurement-card">
+        <div class="measure-header">
+          <h2 class="panel-title">Measurement Results</h2>
+          <div class="shots-dropdown-wrap">
+            <label for="shots-select" class="shots-label">Shots:</label>
+            <select id="shots-select" class="shots-select">
+              <option value="1024" selected>1024</option>
+              <option value="4096">4096</option>
+              <option value="8192">8192</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Histogram Bars -->
+        <div class="histogram-box">
+          <div class="chart-y-axis">
+            <span>1.0</span>
+            <span>0.5</span>
+            <span>0.0</span>
+          </div>
+          <div class="histogram-bars-area">
+            <!-- Bar |0⟩ -->
+            <div class="bar-col">
+              <div class="bar-num" id="bar-val-0">0.502</div>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-fill-0" style="height: 50.2%; background: var(--text-primary);"></div>
+              </div>
+              <div class="bar-label">|0⟩</div>
+            </div>
+
+            <!-- Bar |1⟩ -->
+            <div class="bar-col">
+              <div class="bar-num" id="bar-val-1">0.498</div>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-fill-1" style="height: 49.8%; background: var(--text-muted);"></div>
+              </div>
+              <div class="bar-label">|1⟩</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Raw Counts Collapsible Dropdown -->
+        <details class="raw-counts-details" id="raw-counts-expander">
+          <summary class="raw-counts-summary">
+            <span style="display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Raw Counts
+            </span>
+            <span class="summary-arrow">›</span>
+          </summary>
+          <div class="raw-counts-body">
+            <div class="raw-count-row">
+              <span class="mono">|0⟩ State:</span>
+              <span class="mono bold" id="raw-count-0">514 shots</span>
+            </div>
+            <div class="raw-count-row">
+              <span class="mono">|1⟩ State:</span>
+              <span class="mono bold" id="raw-count-1">510 shots</span>
+            </div>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Educational / Learn More Modal (Dialog) -->
+  <dialog id="learn-modal" class="learn-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title">Quantum State &amp; Bloch Sphere Guide</h3>
+        <button class="dialog-close" id="close-modal-btn">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <p>
+          The <strong>Bloch Sphere</strong> is a geometric representation of the pure state space of a 2-level quantum mechanical system (qubit).
+        </p>
+        <ul class="dialog-list">
+          <li><strong>|0⟩ (North Pole):</strong> Standard computational ground state (θ = 0°).</li>
+          <li><strong>|1⟩ (South Pole):</strong> Standard computational excited state (θ = 180°).</li>
+          <li><strong>Hadamard (H Gate):</strong> Maps |0⟩ into equal superposition (|0⟩ + |1⟩)/√2 along the X-axis.</li>
+          <li><strong>Pauli-X (X Gate):</strong> Performs a quantum bit-flip, rotating the state vector 180° around the X-axis.</li>
+          <li><strong>Pauli-Z (Z Gate):</strong> Inverts relative quantum phase φ.</li>
+          <li><strong>Measurement:</strong> Simulates Born's probability rule P(|0⟩) = |α|², P(|1⟩) = |β|².</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
+</Layout>
+
+<script>
+  // ============================================================
+  // Quantum Simulator & 3D Interactive Bloch Sphere Engine
+  // ============================================================
+
+  interface Complex {
+    re: number;
+    im: number;
+  }
+
+  // Pure Qubit State: |ψ⟩ = α|0⟩ + β|1⟩
+  let alpha: Complex = { re: 1 / Math.SQRT2, im: 0 };
+  let beta: Complex  = { re: 1 / Math.SQRT2, im: 0 };
+  let appliedGates: string[] = ['H', 'X'];
+  let shotsCount = 1024;
+  let fidelityVal = 99.8;
+
+  // 3D Sphere Rotation angles (in radians)
+  let rotX = 0.35;
+  let rotY = -0.55;
+  let isDragging = false;
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+
+  const canvas = document.getElementById('bloch-canvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+
+  // UI Elements
+  const tabBloch = document.getElementById('tab-bloch')!;
+  const tabState = document.getElementById('tab-state')!;
+  const tabProb  = document.getElementById('tab-prob')!;
+  const viewBloch = document.getElementById('view-bloch')!;
+  const viewState = document.getElementById('view-state')!;
+  const viewProb  = document.getElementById('view-prob')!;
+
+  const valAlpha = document.getElementById('val-alpha')!;
+  const valBeta  = document.getElementById('val-beta')!;
+  const valDirac = document.getElementById('val-dirac')!;
+  const valTheta = document.getElementById('val-theta')!;
+  const valPhi   = document.getElementById('val-phi')!;
+
+  const metricGates    = document.getElementById('metric-gates')!;
+  const metricFidelity = document.getElementById('metric-fidelity')!;
+  const metricTime     = document.getElementById('metric-time')!;
+
+  const barVal0  = document.getElementById('bar-val-0')!;
+  const barVal1  = document.getElementById('bar-val-1')!;
+  const barFill0 = document.getElementById('bar-fill-0')!;
+  const barFill1 = document.getElementById('bar-fill-1')!;
+  const rawCount0 = document.getElementById('raw-count-0')!;
+  const rawCount1 = document.getElementById('raw-count-1')!;
+
+  const prob0Text = document.getElementById('prob-0-text')!;
+  const prob1Text = document.getElementById('prob-1-text')!;
+  const prob0Bar  = document.getElementById('prob-0-bar')!;
+  const prob1Bar  = document.getElementById('prob-1-bar')!;
+
+  const stateAmpDisplay = document.getElementById('state-amplitudes-display')!;
+  const densityDisplay  = document.getElementById('density-matrix-display')!;
+  const circuitContainer = document.getElementById('circuit-gates-container')!;
+  const presetSelector  = document.getElementById('preset-selector') as HTMLSelectElement;
+  const shotsSelector   = document.getElementById('shots-select') as HTMLSelectElement;
+
+  // Learn dialog
+  const learnModal = document.getElementById('learn-modal') as HTMLDialogElement;
+  document.getElementById('learn-more-btn')!.onclick = () => learnModal.showModal();
+  document.getElementById('close-modal-btn')!.onclick = () => learnModal.close();
+
+  // --- Tab Switching ---
+  function switchTab(activeTab: HTMLElement, activeView: HTMLElement) {
+    [tabBloch, tabState, tabProb].forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    [viewBloch, viewState, viewProb].forEach(v => v.style.display = 'none');
+
+    activeTab.classList.add('active');
+    activeTab.setAttribute('aria-selected', 'true');
+    activeView.style.display = 'block';
+  }
+
+  tabBloch.onclick = () => switchTab(tabBloch, viewBloch);
+  tabState.onclick = () => switchTab(tabState, viewState);
+  tabProb.onclick  = () => switchTab(tabProb, viewProb);
+
+  // --- Quantum Linear Algebra Utilities ---
+  function cNormSq(c: Complex): number {
+    return c.re * c.re + c.im * c.im;
+  }
+
+  function normalizeState() {
+    const norm = Math.sqrt(cNormSq(alpha) + cNormSq(beta));
+    if (norm > 1e-12) {
+      alpha = { re: alpha.re / norm, im: alpha.im / norm };
+      beta  = { re: beta.re / norm,  im: beta.im / norm };
+    }
+  }
+
+  function applyGate(gate: string) {
+    const startTime = performance.now();
+    const invSqrt2 = 1 / Math.SQRT2;
+
+    switch (gate) {
+      case 'X': // Pauli-X: |0⟩ <-> |1⟩
+        {
+          const temp = { ...alpha };
+          alpha = { ...beta };
+          beta = temp;
+        }
+        break;
+
+      case 'Y': // Pauli-Y: |0⟩ -> i|1⟩, |1⟩ -> -i|0⟩
+        {
+          const a = { ...alpha };
+          const b = { ...beta };
+          alpha = { re: b.im, im: -b.re };
+          beta  = { re: -a.im, im: a.re };
+        }
+        break;
+
+      case 'Z': // Pauli-Z: |1⟩ -> -|1⟩
+        beta = { re: -beta.re, im: -beta.im };
+        break;
+
+      case 'H': // Hadamard
+        {
+          const a = { ...alpha };
+          const b = { ...beta };
+          alpha = { re: (a.re + b.re) * invSqrt2, im: (a.im + b.im) * invSqrt2 };
+          beta  = { re: (a.re - b.re) * invSqrt2, im: (a.im - b.im) * invSqrt2 };
+        }
+        break;
+
+      case 'S': // Phase S (rotation of pi/2 around Z): beta -> beta * i
+        {
+          const b = { ...beta };
+          beta = { re: -b.im, im: b.re };
+        }
+        break;
+
+      case 'RESET':
+        alpha = { re: 1, im: 0 };
+        beta  = { re: 0, im: 0 };
+        appliedGates = [];
+        break;
+    }
+
+    if (gate !== 'RESET') {
+      appliedGates.push(gate);
+    }
+
+    normalizeState();
+    const elapsed = Math.max(0.04, (performance.now() - startTime) / 1000 + (Math.random() * 0.08));
+    metricTime.textContent = elapsed.toFixed(2) + ' s';
+
+    updateUI();
+  }
+
+  // --- Compute Spherical Polar Angles & Bloch Vector Coordinates ---
+  function getBlochCoordinates(): { thetaDeg: number; phiDeg: number; x: number; y: number; z: number } {
+    const p0 = cNormSq(alpha);
+    const p1 = cNormSq(beta);
+
+    // Theta: polar angle from +Z (|0⟩) to -Z (|1⟩)
+    const theta = 2 * Math.acos(Math.min(1, Math.max(0, Math.sqrt(p0))));
+    
+    // Phi: relative phase angle
+    const phi0 = Math.atan2(alpha.im, alpha.re);
+    const phi1 = Math.atan2(beta.im, beta.re);
+    let phi = phi1 - phi0;
+    while (phi < 0) phi += 2 * Math.PI;
+    while (phi >= 2 * Math.PI) phi -= 2 * Math.PI;
+
+    // Bloch vector (x, y, z) on unit sphere
+    const x = Math.sin(theta) * Math.cos(phi);
+    const y = Math.sin(theta) * Math.sin(phi);
+    const z = Math.cos(theta);
+
+    return {
+      thetaDeg: Math.round((theta * 180 / Math.PI) * 10) / 10,
+      phiDeg:   Math.round((phi * 180 / Math.PI) * 10) / 10,
+      x, y, z
+    };
+  }
+
+  // --- Project 3D Point to 2D Canvas with Rotation ---
+  function project3D(x: number, y: number, z: number, radius: number, cx: number, cy: number): { px: number; py: number; depth: number } {
+    // Rotation around X axis
+    const y1 = y * Math.cos(rotX) - z * Math.sin(rotX);
+    const z1 = y * Math.sin(rotX) + z * Math.cos(rotX);
+
+    // Rotation around Y axis
+    const x2 = x * Math.cos(rotY) + z1 * Math.sin(rotY);
+    const z2 = -x * Math.sin(rotY) + z1 * Math.cos(rotY);
+
+    const px = cx + x2 * radius;
+    const py = cy - y1 * radius; // Invert Y for screen coordinates
+    return { px, py, depth: z2 };
+  }
+
+  // --- Render Interactive 3D Bloch Sphere on Canvas ---
+  function renderBlochSphere() {
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const R  = 120; // Sphere radius
+
+    const isDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+    const sphereBg = isDark ? 'rgba(99, 102, 241, 0.04)' : 'rgba(238, 242, 255, 0.55)';
+    const strokeGrid = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(100, 116, 139, 0.28)';
+    const axisColor  = isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(30, 41, 59, 0.65)';
+    const textColor  = isDark ? '#E5E5E8' : '#1E293B';
+
+    // 1. Shaded Sphere Body
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = sphereBg;
+    ctx.fill();
+    ctx.strokeStyle = strokeGrid;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 2. Latitude Circles (Equator + Parallels)
+    const latitudes = [-0.5, 0, 0.5];
+    latitudes.forEach(lat => {
+      ctx.beginPath();
+      const zVal = lat;
+      const rLat = Math.sqrt(Math.max(0, 1 - zVal * zVal));
+      const steps = 60;
+      for (let i = 0; i <= steps; i++) {
+        const ang = (i / steps) * Math.PI * 2;
+        const x3 = rLat * Math.cos(ang);
+        const y3 = rLat * Math.sin(ang);
+        const p = project3D(x3, y3, zVal, R, cx, cy);
+        if (i === 0) ctx.moveTo(p.px, p.py);
+        else ctx.lineTo(p.px, p.py);
+      }
+      ctx.strokeStyle = lat === 0 ? (isDark ? 'rgba(99, 102, 241, 0.35)' : 'rgba(99, 102, 241, 0.4)') : strokeGrid;
+      ctx.lineWidth = lat === 0 ? 1.4 : 0.8;
+      ctx.stroke();
+    });
+
+    // 3. Longitude Meridians
+    const meridians = [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
+    meridians.forEach(mAng => {
+      ctx.beginPath();
+      const steps = 60;
+      for (let i = 0; i <= steps; i++) {
+        const phi = (i / steps) * Math.PI * 2;
+        const x3 = Math.sin(phi) * Math.cos(mAng);
+        const y3 = Math.sin(phi) * Math.sin(mAng);
+        const z3 = Math.cos(phi);
+        const p = project3D(x3, y3, z3, R, cx, cy);
+        if (i === 0) ctx.moveTo(p.px, p.py);
+        else ctx.lineTo(p.px, p.py);
+      }
+      ctx.strokeStyle = strokeGrid;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    });
+
+    // 4. Coordinate Axes (X, Y, Z)
+    const axes = [
+      { label: 'X', x: 1.25, y: 0, z: 0 },
+      { label: 'Y', x: 0, y: 1.25, z: 0 },
+      { label: '|0⟩', x: 0, y: 0, z: 1.25 },
+      { label: '|1⟩', x: 0, y: 0, z: -1.25 }
+    ];
+
+    axes.forEach(a => {
+      const pCenter = project3D(0, 0, 0, R, cx, cy);
+      const pEnd    = project3D(a.x, a.y, a.z, R, cx, cy);
+
+      ctx.beginPath();
+      ctx.moveTo(pCenter.px, pCenter.py);
+      ctx.lineTo(pEnd.px, pEnd.py);
+      ctx.strokeStyle = axisColor;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash(a.x === 0 && a.y === 0 ? [] : [3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Axis label
+      ctx.font = '600 12px "IBM Plex Mono", monospace';
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.label, pEnd.px + (a.x !== 0 ? 8 : 0), pEnd.py + (a.z > 0 ? -10 : a.z < 0 ? 12 : 0));
+    });
+
+    // 5. Current State Vector Arrow |ψ⟩
+    const coords = getBlochCoordinates();
+    const pOrigin = project3D(0, 0, 0, R, cx, cy);
+    const pTarget = project3D(coords.x, coords.y, coords.z, R, cx, cy);
+    const pEquator = project3D(coords.x, coords.y, 0, R, cx, cy);
+
+    // Dashed projection onto XY plane
+    ctx.beginPath();
+    ctx.moveTo(pOrigin.px, pOrigin.py);
+    ctx.lineTo(pEquator.px, pEquator.py);
+    ctx.lineTo(pTarget.px, pTarget.py);
+    ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.35)';
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Vector Arrow Main Body
+    ctx.beginPath();
+    ctx.moveTo(pOrigin.px, pOrigin.py);
+    ctx.lineTo(pTarget.px, pTarget.py);
+    ctx.strokeStyle = isDark ? '#FFFFFF' : '#0A0A0A';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Vector Tip Circle / Arrow Head
+    ctx.beginPath();
+    ctx.arc(pTarget.px, pTarget.py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = isDark ? '#FFFFFF' : '#0A0A0A';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#111112' : '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // --- Mouse / Touch Dragging for 3D Sphere Rotation ---
+  canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+
+    rotY += dx * 0.015;
+    rotX += dy * 0.015;
+    renderBlochSphere();
+  });
+
+  // Touch handlers
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      lastMouseX = e.touches[0].clientX;
+      lastMouseY = e.touches[0].clientY;
+    }
+  });
+  window.addEventListener('touchend', () => { isDragging = false; });
+  window.addEventListener('touchmove', (e) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - lastMouseX;
+    const dy = e.touches[0].clientY - lastMouseY;
+    lastMouseX = e.touches[0].clientX;
+    lastMouseY = e.touches[0].clientY;
+
+    rotY += dx * 0.015;
+    rotX += dy * 0.015;
+    renderBlochSphere();
+  });
+
+  // --- Format Complex String ---
+  function fmtComplex(c: Complex): string {
+    const sign = c.im >= 0 ? '+' : '-';
+    return `${c.re.toFixed(3)} ${sign} ${Math.abs(c.im).toFixed(3)}i`;
+  }
+
+  // --- Update UI, Histogram, Math Displays & Circuit ---
+  function updateUI() {
+    normalizeState();
+    const p0 = cNormSq(alpha);
+    const p1 = cNormSq(beta);
+    const coords = getBlochCoordinates();
+
+    // 1. Math displays
+    valAlpha.textContent = fmtComplex(alpha);
+    valBeta.textContent  = fmtComplex(beta);
+    valTheta.textContent = coords.thetaDeg.toFixed(1) + '°';
+    valPhi.textContent   = coords.phiDeg.toFixed(1) + '°';
+
+    // Dirac notation representation
+    if (Math.abs(p0 - 1) < 0.01) {
+      valDirac.textContent = '|ψ⟩ = |0⟩';
+    } else if (Math.abs(p1 - 1) < 0.01) {
+      valDirac.textContent = '|ψ⟩ = |1⟩';
+    } else if (Math.abs(p0 - 0.5) < 0.02 && Math.abs(alpha.im) < 0.05 && Math.abs(beta.im) < 0.05) {
+      valDirac.textContent = '|ψ⟩ = (|0⟩ + |1⟩) / √2';
+    } else {
+      valDirac.textContent = `|ψ⟩ = ${alpha.re.toFixed(2)}|0⟩ + ${beta.re.toFixed(2)}|1⟩`;
+    }
+
+    // 2. Probability tabs
+    const pct0 = Math.round(p0 * 1000) / 10;
+    const pct1 = Math.round(p1 * 1000) / 10;
+    prob0Text.textContent = pct0.toFixed(1) + '%';
+    prob1Text.textContent = pct1.toFixed(1) + '%';
+    prob0Bar.style.width  = `${pct0}%`;
+    prob1Bar.style.width  = `${pct1}%`;
+
+    // 3. Simulated Shots & Histogram
+    // Stochastic binomial shot count simulation
+    let count0 = 0;
+    for (let i = 0; i < shotsCount; i++) {
+      if (Math.random() < p0) count0++;
+    }
+    const count1 = shotsCount - count0;
+    const freq0 = count0 / shotsCount;
+    const freq1 = count1 / shotsCount;
+
+    barVal0.textContent = freq0.toFixed(3);
+    barVal1.textContent = freq1.toFixed(3);
+    barFill0.style.height = `${Math.round(freq0 * 100)}%`;
+    barFill1.style.height = `${Math.round(freq1 * 100)}%`;
+
+    rawCount0.textContent = `${count0} shots`;
+    rawCount1.textContent = `${count1} shots`;
+
+    // 4. State vector tab displays
+    stateAmpDisplay.innerHTML = `[ ${fmtComplex(alpha)} ]<br/>[ ${fmtComplex(beta)} ]`;
+    densityDisplay.innerHTML = `
+      [ ${(alpha.re*alpha.re + alpha.im*alpha.im).toFixed(4)} &nbsp; ${(alpha.re*beta.re + alpha.im*beta.im).toFixed(4)} ]<br/>
+      [ ${(beta.re*alpha.re + beta.im*alpha.im).toFixed(4)} &nbsp; ${(beta.re*beta.re + beta.im*beta.im).toFixed(4)} ]
+    `;
+
+    // 5. Gate Counter & Circuit Sequence
+    metricGates.textContent = String(appliedGates.length);
+    renderCircuit();
+
+    // 6. 3D Canvas render
+    renderBlochSphere();
+  }
+
+  // --- Render Circuit Gates Wire ---
+  function renderCircuit() {
+    if (appliedGates.length === 0) {
+      circuitContainer.innerHTML = `<span style="font-size:0.75rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin:0 8px;">(Identity wire)</span>`;
+      return;
+    }
+
+    const gateColors: Record<string, string> = {
+      'H': 'gate-color-h',
+      'X': 'gate-color-x',
+      'Y': 'gate-color-y',
+      'Z': 'gate-color-z',
+      'S': 'gate-color-s',
+      'MEASURE': 'gate-color-measure'
+    };
+
+    circuitContainer.innerHTML = appliedGates.map((g, idx) => {
+      const colClass = gateColors[g] || 'gate-color-h';
+      if (g === 'MEASURE') {
+        return `
+          <div class="circuit-gate-box ${colClass}" title="Measurement Gauge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 19h18"/>
+              <path d="M5 19a7 7 0 0 1 14 0"/>
+              <line x1="12" y1="19" x2="16" y2="8"/>
+            </svg>
+          </div>`;
+      }
+      return `<div class="circuit-gate-box ${colClass}" title="${g} Gate">${g}</div>`;
+    }).join('');
+  }
+
+  // --- Projective Measurement Simulation ---
+  function performMeasurement() {
+    const p0 = cNormSq(alpha);
+    const isZero = Math.random() < p0;
+
+    if (isZero) {
+      alpha = { re: 1, im: 0 };
+      beta  = { re: 0, im: 0 };
+    } else {
+      alpha = { re: 0, im: 0 };
+      beta  = { re: 1, im: 0 };
+    }
+
+    appliedGates.push('MEASURE');
+    updateUI();
+  }
+
+  // --- Toolbar Handlers ---
+  document.getElementById('gate-reset')!.onclick   = () => applyGate('RESET');
+  document.getElementById('gate-x')!.onclick       = () => applyGate('X');
+  document.getElementById('gate-y')!.onclick       = () => applyGate('Y');
+  document.getElementById('gate-z')!.onclick       = () => applyGate('Z');
+  document.getElementById('gate-h')!.onclick       = () => applyGate('H');
+  document.getElementById('gate-s')!.onclick       = () => applyGate('S');
+  document.getElementById('gate-measure')!.onclick = performMeasurement;
+  document.getElementById('clear-circuit-btn')!.onclick = () => applyGate('RESET');
+  document.getElementById('quick-add-gate-btn')!.onclick = () => applyGate('H');
+
+  shotsSelector.addEventListener('change', () => {
+    shotsCount = parseInt(shotsSelector.value, 10) || 1024;
+    updateUI();
+  });
+
+  // --- Presets / Document State Selector ---
+  presetSelector.addEventListener('change', () => {
+    const p = presetSelector.value;
+    switch (p) {
+      case 'ground':
+        alpha = { re: 1, im: 0 };
+        beta  = { re: 0, im: 0 };
+        appliedGates = [];
+        break;
+      case 'excited':
+        alpha = { re: 0, im: 0 };
+        beta  = { re: 1, im: 0 };
+        appliedGates = ['X'];
+        break;
+      case 'hadamard':
+        alpha = { re: 1 / Math.SQRT2, im: 0 };
+        beta  = { re: 1 / Math.SQRT2, im: 0 };
+        appliedGates = ['H'];
+        break;
+      case 'phase_y':
+        alpha = { re: 1 / Math.SQRT2, im: 0 };
+        beta  = { re: 0, im: 1 / Math.SQRT2 };
+        appliedGates = ['H', 'S'];
+        break;
+      case 'doc_authentic':
+        alpha = { re: 0.92, im: 0.08 };
+        beta  = { re: 0.38, im: 0.05 };
+        appliedGates = ['H', 'X'];
+        break;
+      case 'doc_tampered':
+        alpha = { re: 0.22, im: 0.15 };
+        beta  = { re: 0.94, im: -0.21 };
+        appliedGates = ['X', 'Z'];
+        break;
+    }
+    updateUI();
+  });
+
+  // Initial render
+  updateUI();
+</script>
+
+<style>
+  /* Header layout */
+  .header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  /* Metrics KPI Grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+  }
+
+  .metric-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .metric-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .metric-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .metric-val {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    font-family: var(--font-sans);
+  }
+
+  .metric-sub {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Preset Selector Bar */
+  .preset-card {
+    padding: var(--space-3) var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+  }
+
+  .preset-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .preset-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .preset-tag {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg-raised);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .preset-desc {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .preset-dropdown {
+    padding: 6px 12px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Workspace Layout (2 columns) */
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .workspace-panel {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  .panel-title {
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  /* Tab Pill Group */
+  .tab-pill-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: var(--bg-raised);
+    padding: 3px;
+    border-radius: 6px;
+  }
+
+  .tab-pill {
+    background: transparent;
+    border: none;
+    padding: 5px 12px;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .tab-pill.active {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    font-weight: 600;
+  }
+
+  /* Bloch Sphere Layout */
+  .bloch-layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  .bloch-canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-raised);
+    border-radius: 8px;
+    padding: var(--space-3);
+    cursor: grab;
+  }
+
+  .bloch-canvas-wrap:active {
+    cursor: grabbing;
+  }
+
+  .bloch-hint {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* State Inspector */
+  .state-inspector {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .inspector-title {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+
+  .state-eq-box {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .state-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    padding: 4px 0;
+  }
+
+  .state-symbol {
+    color: var(--text-secondary);
+  }
+
+  .state-number {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .dirac-formula {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-primary);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .angle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .angle-item {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-2) var(--space-3);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .angle-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .angle-val {
+    font-family: var(--font-mono);
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* State vector matrix view */
+  .matrix-display-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+  }
+
+  .matrix-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-4);
+  }
+
+  .matrix-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: var(--space-2);
+  }
+
+  .bracket-matrix {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  /* Probability Bars */
+  .prob-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-4);
+  }
+
+  .prob-header-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+  }
+
+  .q-prob-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-hover);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .q-prob-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* Gate Toolbar */
+  .gate-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+  }
+
+  .gate-btn {
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .gate-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-accent);
+  }
+
+  .gate-btn--measure {
+    margin-left: auto;
+  }
+
+  /* Right Stack Panels */
+  .right-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  /* Quantum Circuit */
+  .circuit-card {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .circuit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  .circuit-clear-btn {
+    background: transparent;
+    border: none;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .circuit-clear-btn:hover {
+    color: var(--danger);
+  }
+
+  .circuit-canvas-area {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-4);
+    overflow-x: auto;
+  }
+
+  .wire-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 48px;
+  }
+
+  .qubit-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .wire-line {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .wire-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border-accent);
+    z-index: 1;
+  }
+
+  .gates-sequence {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .circuit-gate-box {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .gate-color-h { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-accent); }
+  .gate-color-x { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-accent); }
+  .gate-color-y { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-accent); }
+  .gate-color-z { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-accent); }
+  .gate-color-s { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-accent); }
+  .gate-color-measure { background: var(--bg-raised); color: var(--text-primary); border: 1px solid var(--border); }
+
+  .add-gate-banner {
+    width: 100%;
+    margin-top: var(--space-3);
+    padding: 8px;
+    background: var(--bg-raised);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .add-gate-banner:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-accent);
+  }
+    background: var(--bg-hover);
+  }
+
+  /* Measurement Histogram */
+  .measurement-card {
+    padding: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .measure-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  .shots-dropdown-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .shots-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  .shots-select {
+    padding: 3px 8px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  /* Histogram Box */
+  .histogram-box {
+    display: flex;
+    height: 160px;
+    gap: var(--space-4);
+    padding-bottom: var(--space-2);
+  }
+
+  .chart-y-axis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    padding-bottom: 24px;
+  }
+
+  .histogram-bars-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    width: 60px;
+  }
+
+  .bar-num {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .bar-track {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .bar-fill {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .bar-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 6px;
+  }
+
+  /* Raw counts details */
+  .raw-counts-details {
+    margin-top: var(--space-4);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-3);
+  }
+
+  .raw-counts-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .raw-counts-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .summary-arrow {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+
+  .raw-counts-body {
+    background: var(--bg-raised);
+    border-radius: 6px;
+    padding: var(--space-3);
+    margin-top: var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .raw-count-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+  }
+
+  /* Dialog */
+  .learn-dialog {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    padding: 0;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  }
+
+  .learn-dialog::backdrop {
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .dialog-content {
+    padding: var(--space-6);
+  }
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .dialog-title {
+    font-size: var(--text-md);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .dialog-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .dialog-body {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .dialog-list {
+    margin-top: var(--space-3);
+    padding-left: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* Responsiveness */
+  @media (max-width: 1024px) {
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .workspace-grid {
+      grid-template-columns: 1fr;
+    }
+    .bloch-layout {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .metrics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

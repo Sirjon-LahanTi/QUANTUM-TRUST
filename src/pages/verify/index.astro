@@ -1,0 +1,423 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+---
+
+<Layout title="Verify Document" description="Upload a digitally signed PDF for cryptographic signature verification and integrity analysis.">
+  <Navigation slot="sidebar" />
+
+  <div class="page-header">
+    <h1 class="page-title">Verify Document</h1>
+    <p class="page-subtitle">Upload a digitally signed file to perform cryptographic signature verification, certificate analysis, and integrity checking.</p>
+  </div>
+
+  <!-- Upload Panel -->
+  <section class="section" id="upload-section" aria-label="Upload signed PDF">
+    <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload signed PDF file">
+      <input type="file" id="file-input" accept=".pdf,application/pdf" aria-label="Choose PDF file" />
+      <div class="upload-icon" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="upload-label">Upload Signed File</div>
+      <div class="upload-hint">Drop your digitally signed file here or browse to begin verification.</div>
+      <div class="upload-hint" style="margin-top:8px;font-size:0.6875rem;">File size &middot; Max 50MB &middot; Secure local analysis</div>
+    </div>
+    <div id="file-info" class="file-info" style="display:none"></div>
+    <div id="upload-error" class="error-banner" style="display:none;margin-top:12px;"></div>
+  </section>
+
+  <!-- Progress Panel (hidden until upload) -->
+  <section class="section" id="progress-section" style="display:none;" aria-label="Verification progress" aria-live="polite">
+    <div class="card">
+      <div class="card-title">Verifying document…</div>
+      <div class="progress-steps" id="progress-steps">
+        <div class="progress-step pending" data-step="upload">
+          <span class="step-indicator"></span>Uploading document
+        </div>
+        <div class="progress-step pending" data-step="parse">
+          <span class="step-indicator"></span>Parsing PDF structure
+        </div>
+        <div class="progress-step pending" data-step="signature">
+          <span class="step-indicator"></span>Detecting digital signature
+        </div>
+        <div class="progress-step pending" data-step="algorithm">
+          <span class="step-indicator"></span>Detecting cryptographic algorithms
+        </div>
+        <div class="progress-step pending" data-step="certificate">
+          <span class="step-indicator"></span>Analyzing certificate
+        </div>
+        <div class="progress-step pending" data-step="verify">
+          <span class="step-indicator"></span>Verifying signature
+        </div>
+        <div class="progress-step pending" data-step="integrity">
+          <span class="step-indicator"></span>Checking document integrity
+        </div>
+        <div class="progress-step pending" data-step="duplicate">
+          <span class="step-indicator"></span>Checking duplicate status
+        </div>
+        <div class="progress-step pending" data-step="verdict">
+          <span class="step-indicator"></span>Generating verification verdict
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Panel (hidden until analysis complete) -->
+  <section id="results-section" style="display:none;" aria-label="Verification results">
+
+    <!-- Verdict -->
+    <div id="verdict-container" class="section"></div>
+
+    <div class="results-grid">
+      <!-- Left column -->
+      <div class="results-col">
+
+        <!-- Document Info -->
+        <div class="section">
+          <div class="section-title">Document</div>
+          <div class="card">
+            <dl class="kv-list" id="doc-info"></dl>
+          </div>
+        </div>
+
+        <!-- Digital Signature -->
+        <div class="section">
+          <div class="section-title">Digital Signature</div>
+          <div class="card" id="sig-card">
+            <dl class="kv-list" id="sig-info"></dl>
+          </div>
+        </div>
+
+        <!-- Integrity -->
+        <div class="section">
+          <div class="section-title">Document Integrity</div>
+          <div class="card" id="integrity-card">
+            <dl class="kv-list" id="integrity-info"></dl>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column -->
+      <div class="results-col">
+
+        <!-- Cryptography -->
+        <div class="section">
+          <div class="section-title">Cryptography</div>
+          <div class="card">
+            <dl class="kv-list" id="crypto-info"></dl>
+          </div>
+        </div>
+
+        <!-- Certificate -->
+        <div class="section">
+          <div class="section-title">Certificate</div>
+          <div class="card" id="cert-card">
+            <dl class="kv-list" id="cert-info"></dl>
+          </div>
+        </div>
+
+        <!-- Duplicate -->
+        <div class="section">
+          <div class="section-title">Duplicate Detection</div>
+          <div class="card" id="dup-card">
+            <dl class="kv-list" id="dup-info"></dl>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="section" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:var(--space-6);">
+      <button class="btn btn-secondary" id="new-analysis-btn">Verify Another Document</button>
+      <a id="security-link" href="#" class="btn btn-primary" style="display:none;">
+        Open Security Analysis &rarr;
+      </a>
+    </div>
+
+  </section>
+</Layout>
+
+<script>
+  const API = 'http://localhost:8000';
+
+  const fileInput   = document.getElementById('file-input') as HTMLInputElement;
+  const uploadZone  = document.getElementById('upload-zone')!;
+  const uploadErr   = document.getElementById('upload-error')!;
+  const fileInfo    = document.getElementById('file-info')!;
+  const progressSec = document.getElementById('progress-section')!;
+  const uploadSec   = document.getElementById('upload-section')!;
+  const resultsSec  = document.getElementById('results-section')!;
+  const newAnalBtn  = document.getElementById('new-analysis-btn')!;
+
+  // Drag & drop
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer?.files[0];
+    if (file) handleFile(file);
+  });
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  fileInput.addEventListener('change', () => { if (fileInput.files?.[0]) handleFile(fileInput.files[0]); });
+
+  newAnalBtn.addEventListener('click', resetUI);
+
+  const STEPS = ['upload','parse','signature','algorithm','certificate','verify','integrity','duplicate','verdict'];
+
+  function setStep(name: string, state: 'active' | 'done') {
+    const el = document.querySelector(`[data-step="${name}"]`);
+    if (!el) return;
+    el.classList.remove('pending','active','done');
+    el.classList.add(state);
+    const ind = el.querySelector('.step-indicator')!;
+    if (state === 'done') { ind.textContent = '✓'; }
+    else { ind.textContent = ''; }
+  }
+
+  function completeAllSteps() {
+    STEPS.forEach(s => setStep(s, 'done'));
+  }
+
+  async function handleFile(file: File) {
+    // Validate
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+      showError('Only PDF files are accepted. Please upload a valid PDF document.');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      showError('File size exceeds the 50MB limit. Please upload a smaller document.');
+      return;
+    }
+
+    clearError();
+    uploadSec.style.display = 'none';
+    progressSec.style.display = 'block';
+    resultsSec.style.display = 'none';
+
+    // Reset steps
+    STEPS.forEach(s => {
+      const el = document.querySelector(`[data-step="${s}"]`);
+      if (el) {
+        el.classList.remove('active','done');
+        el.classList.add('pending');
+        el.querySelector('.step-indicator')!.textContent = '';
+      }
+    });
+
+    setStep('upload', 'active');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setStep('upload', 'done');
+      setStep('parse', 'active');
+
+      const response = await fetch(`${API}/api/analyze`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ detail: 'Unknown server error' }));
+        throw new Error(errData.detail || `Server error: ${response.status}`);
+      }
+
+      // Parse response JSON first
+      const result = await response.json();
+
+      // Animate remaining steps
+      const stepDelay = [150, 200, 250, 300, 350, 250, 200];
+      const midSteps = STEPS.slice(1, -1);
+      for (let i = 0; i < midSteps.length; i++) {
+        setStep(midSteps[i], 'done');
+        if (i + 1 < midSteps.length) {
+          setStep(midSteps[i + 1], 'active');
+          await delay(stepDelay[i] ?? 200);
+        }
+      }
+
+      setStep('verdict', 'active');
+      await delay(200);
+      completeAllSteps();
+      await delay(250);
+
+      progressSec.style.display = 'none';
+      renderResults(result);
+      resultsSec.style.display = 'block';
+
+    } catch (err: unknown) {
+      progressSec.style.display = 'none';
+      uploadSec.style.display = 'block';
+      const msg = err instanceof Error ? err.message : 'Verification failed. Please try again.';
+      showError(msg);
+    }
+  }
+
+  function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
+  function safe(val: any, fallback: string = 'Not available'): string {
+    if (val === null || val === undefined || val === '') return fallback;
+    return String(val);
+  }
+
+  function renderResults(r: any) {
+    // ── Verdict ──────────────────────────────────────────────────────────────
+    const verdict = (r.verdict ?? 'UNKNOWN').toUpperCase();
+    const vClass = verdict === 'AUTHENTIC' ? 'authentic'
+                 : verdict === 'TAMPERED'  ? 'tampered'
+                 : verdict === 'SUSPICIOUS' ? 'suspicious' : '';
+    document.getElementById('verdict-container')!.innerHTML = `
+      <div class="verdict-banner ${vClass}" role="status" aria-label="Verdict: ${verdict}">
+        <span class="verdict-word">${verdict}</span>
+        <div class="verdict-sublabel">Signature &amp; Document Integrity Verdict</div>
+      </div>`;
+
+    // ── Document info ─────────────────────────────────────────────────────────
+    const d = r.document ?? {};
+    document.getElementById('doc-info')!.innerHTML = kvRows([
+      ['Filename',    safe(d.filename, 'Unknown')],
+      ['File Size',   d.file_size ? formatBytes(d.file_size) : 'Unknown'],
+      ['PDF Version', safe(d.pdf_version, 'Unknown')],
+      ['Fingerprint', safe(d.fingerprint, 'Not available'), true],
+    ]);
+
+    // ── Digital Signature ─────────────────────────────────────────────────────
+    const s = r.signature ?? {};
+    const sigPresent = s.present === true;
+    const sigStatus = (s.status ?? (sigPresent ? 'UNKNOWN' : 'NONE')).toUpperCase();
+    const sigClass = sigStatus === 'VALID'   ? 'ok'
+                   : sigStatus === 'INVALID' ? 'danger'
+                   : sigStatus === 'NONE'    ? 'neutral' : 'neutral';
+
+    const sigRows: [string, string, boolean?][] = [
+      ['Present', sigPresent ? 'Yes' : 'No'],
+      ['Count',   s.count != null ? String(s.count) : '0'],
+      ['Status',  `<span class="badge badge--${sigClass}">${sigStatus}</span>`],
+    ];
+    if (s.signature_type) {
+      sigRows.push(['Type', safe(s.signature_type)]);
+    }
+    document.getElementById('sig-info')!.innerHTML = kvRows(sigRows);
+
+    // ── Cryptography ──────────────────────────────────────────────────────────
+    const digestAlgo    = safe(s.digest_algorithm,     sigPresent ? 'Detection failed' : 'N/A — no signature');
+    const sigAlgo       = safe(s.signature_algorithm,  sigPresent ? 'Detection failed' : 'N/A — no signature');
+    const pubKeyAlgo    = safe(s.public_key_algorithm, sigPresent ? 'Detection failed' : 'N/A — no signature');
+    const keySize       = s.key_size != null ? `${s.key_size} bits` : (sigPresent ? 'Detection failed' : 'N/A — no signature');
+
+    document.getElementById('crypto-info')!.innerHTML = kvRows([
+      ['Digest Algorithm',    digestAlgo],
+      ['Signature Algorithm', sigAlgo],
+      ['Public Key Algorithm',pubKeyAlgo],
+      ['Key Size',            keySize],
+    ]);
+
+    // ── Certificate ──────────────────────────────────────────────────────────
+    const c = r.certificate ?? {};
+    const hasCert = sigPresent && (c.subject || c.issuer || c.serial_number);
+    const trustStatus = (c.trust_status ?? (hasCert ? 'UNKNOWN' : 'UNAVAILABLE')).toUpperCase();
+    const trustClass  = trustStatus === 'TRUSTED'     ? 'ok'
+                      : trustStatus === 'SELF_SIGNED'  ? 'warn'
+                      : trustStatus === 'UNTRUSTED'   ? 'danger'
+                      : trustStatus === 'EXPIRED'     ? 'danger' : 'neutral';
+    document.getElementById('cert-info')!.innerHTML = kvRows([
+      ['Subject',     hasCert ? safe(c.subject, 'Not available') : (sigPresent ? 'Not extracted' : 'N/A — no signature')],
+      ['Issuer',      hasCert ? safe(c.issuer,  'Not available') : (sigPresent ? 'Not extracted' : 'N/A — no signature')],
+      ['Serial',      hasCert ? safe(c.serial_number, 'Not available') : (sigPresent ? 'Not extracted' : 'N/A — no signature'), true],
+      ['Valid From',  hasCert ? safe(c.valid_from,  'Not available') : (sigPresent ? 'Not extracted' : 'N/A — no signature')],
+      ['Valid Until', hasCert ? safe(c.valid_until, 'Not available') : (sigPresent ? 'Not extracted' : 'N/A — no signature')],
+      ['Trust Status', `<span class="badge badge--${trustClass}">${trustStatus}</span>`],
+    ]);
+
+    // ── Integrity ─────────────────────────────────────────────────────────────
+    const intg = r.integrity ?? {};
+    const intStatus = (intg.status ?? 'UNKNOWN').toUpperCase();
+    const intClass  = intStatus === 'VERIFIED' ? 'ok'
+                    : intStatus === 'FAILED'   ? 'danger' : 'neutral';
+    document.getElementById('integrity-info')!.innerHTML = kvRows([
+      ['Status',       `<span class="badge badge--${intClass}">${intStatus}</span>`],
+      ['Modification', safe(intg.modification_status, 'Unknown')],
+      ['ByteRange',    Array.isArray(intg.byte_range) && intg.byte_range.length
+                         ? intg.byte_range.join(', ')
+                         : 'Not available', true],
+    ]);
+
+    // ── Duplicate ─────────────────────────────────────────────────────────────
+    const dup = r.duplicate ?? {};
+    const isDup = Boolean(dup.is_duplicate);
+    document.getElementById('dup-info')!.innerHTML = kvRows([
+      ['Is Duplicate', isDup ? 'Yes' : 'No'],
+      ['Match Type',   safe(dup.match_type, 'None')],
+    ]);
+
+    // ── Security link ─────────────────────────────────────────────────────────
+    if (r.analysis_id) {
+      const secLink = document.getElementById('security-link') as HTMLAnchorElement;
+      secLink.href = `/security?id=${r.analysis_id}`;
+      secLink.style.display = 'inline-flex';
+    }
+  }
+
+  function kvRows(pairs: [string, string, boolean?][]): string {
+    return pairs.map(([k, v, isMono]) =>
+      `<dt class="kv-key">${k}</dt><dd class="kv-value${isMono ? ' mono' : ''}">${v}</dd>`
+    ).join('');
+  }
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function showError(msg: string) {
+    uploadErr.textContent = msg;
+    uploadErr.style.display = 'block';
+  }
+
+  function clearError() {
+    uploadErr.textContent = '';
+    uploadErr.style.display = 'none';
+  }
+
+  function resetUI() {
+    resultsSec.style.display = 'none';
+    uploadSec.style.display = 'block';
+    fileInput.value = '';
+    clearError();
+  }
+</script>
+
+<style>
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .results-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .file-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    margin-top: var(--space-3);
+  }
+
+  @media (max-width: 900px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+</style>
