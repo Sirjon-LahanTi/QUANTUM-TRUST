@@ -72,7 +72,7 @@ import Navigation from '../../components/Navigation.astro';
 </Layout>
 
 <script>
-  const API = 'http://localhost:8000';
+  const API = (window as any).PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
 
   interface Analysis {
     analysis_id: string;

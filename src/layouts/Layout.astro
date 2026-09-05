@@ -14,6 +14,7 @@ const {
 const fullTitle = title === 'QuantumTrust' ? title : `${title} — QuantumTrust`;
 const currentPath = Astro.url.pathname;
 const isHome = currentPath === '/' || currentPath === '';
+const apiBaseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
 ---
 <!doctype html>
 <html lang="en">
@@ -35,7 +36,8 @@ const isHome = currentPath === '/' || currentPath === '';
       rel="stylesheet"
     />
     <title>{fullTitle}</title>
-    <script is:inline>
+    <script is:inline define:vars={{ apiBaseUrl }}>
+      window.PUBLIC_API_URL = apiBaseUrl;
       (function() {
         const storedTheme = localStorage.getItem('qt-theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

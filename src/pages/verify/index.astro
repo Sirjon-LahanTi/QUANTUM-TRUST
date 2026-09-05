@@ -144,7 +144,7 @@ import Navigation from '../../components/Navigation.astro';
 </Layout>
 
 <script>
-  const API = 'http://localhost:8000';
+  const API = (window as any).PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
 
   const fileInput   = document.getElementById('file-input') as HTMLInputElement;
   const uploadZone  = document.getElementById('upload-zone')!;
