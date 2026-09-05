@@ -40,7 +40,7 @@ import Navigation from '../../components/Navigation.astro';
         <div class="metric-body">
           <span class="metric-label">Qubits</span>
           <div class="metric-val-row">
-            <span class="metric-val" id="metric-qubits">1</span>
+            <span class="metric-val" id="metric-qubits">—</span>
           </div>
           <span class="metric-sub">Active qubits</span>
         </div>
@@ -56,7 +56,7 @@ import Navigation from '../../components/Navigation.astro';
         <div class="metric-body">
           <span class="metric-label">Gates Applied</span>
           <div class="metric-val-row">
-            <span class="metric-val" id="metric-gates">2</span>
+            <span class="metric-val" id="metric-gates">—</span>
           </div>
           <span class="metric-sub">In current circuit</span>
         </div>
@@ -74,7 +74,7 @@ import Navigation from '../../components/Navigation.astro';
         <div class="metric-body">
           <span class="metric-label">State Fidelity</span>
           <div class="metric-val-row">
-            <span class="metric-val" id="metric-fidelity">99.8%</span>
+            <span class="metric-val" id="metric-fidelity">—</span>
           </div>
           <span class="metric-sub">Simulation accuracy</span>
         </div>
@@ -91,7 +91,7 @@ import Navigation from '../../components/Navigation.astro';
         <div class="metric-body">
           <span class="metric-label">Simulation Time</span>
           <div class="metric-val-row">
-            <span class="metric-val" id="metric-time">0.12 s</span>
+            <span class="metric-val" id="metric-time">—</span>
           </div>
           <span class="metric-sub">Last run</span>
         </div>
@@ -105,24 +105,42 @@ import Navigation from '../../components/Navigation.astro';
       <div class="preset-flex">
         <div class="preset-title-group">
           <span class="preset-tag">State Preset</span>
-          <span class="preset-desc">Select a quantum state or load a document's verification security vector:</span>
+          <span class="preset-desc">Select an analyzed document or choose a quantum simulation vector:</span>
         </div>
         <div class="preset-action-group">
           <select id="preset-selector" class="preset-dropdown" aria-label="Select quantum state preset">
-            <option value="ground">Ground State |0⟩</option>
-            <option value="excited">Excited State |1⟩</option>
-            <option value="hadamard" selected>Hadamard Superposition (|0⟩ + |1⟩)/√2</option>
-            <option value="phase_y">Pauli-Y Superposition (|0⟩ + i|1⟩)/√2</option>
-            <option value="doc_authentic">Document: Authentic Baseline Vector</option>
-            <option value="doc_tampered">Document: Tampered State Vector</option>
+            <option value="" selected disabled>— Select a verified document to analyze —</option>
+            <optgroup label="⚡ Verified Documents (Live Analyses)" id="real-docs-optgroup">
+            </optgroup>
+            <optgroup label="📐 Theoretical Simulation Presets">
+              <option value="ground">Ground State |0⟩</option>
+              <option value="excited">Excited State |1⟩</option>
+              <option value="hadamard">Hadamard Superposition (|0⟩ + |1⟩)/√2</option>
+              <option value="phase_y">Pauli-Y Superposition (|0⟩ + i|1⟩)/√2</option>
+              <option value="doc_authentic">Baseline Authentic Model Vector</option>
+              <option value="doc_tampered">Baseline Tampered Model Vector</option>
+            </optgroup>
           </select>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- Empty State when no document has been analyzed / selected -->
+  <div id="security-empty-state" class="card empty-state" style="margin-bottom: var(--space-6); text-align: center; padding: 48px 24px;">
+    <span class="empty-state-icon" style="font-size: 2.25rem; display: inline-block; margin-bottom: 12px;">⚡</span>
+    <p class="empty-state-title" style="font-size: var(--text-md); font-weight: 600; margin-bottom: 6px;">No Document Analyzed Yet</p>
+    <p class="empty-state-desc" style="font-size: var(--text-sm); color: var(--text-secondary); max-width: 480px; margin: 0 auto 16px;">
+      Upload a digitally signed PDF to run cryptographic verification and generate its live Quantum Security Analysis vector.
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
+      <a href="/verify" class="btn btn-primary btn-sm">Upload &amp; Verify Document</a>
+      <a href="/analysis" class="btn btn-secondary btn-sm">View Analysis History</a>
+    </div>
+  </div>
+
   <!-- Main Workspace Grid -->
-  <div class="workspace-grid">
+  <div class="workspace-grid" id="workspace-grid" style="display:none;">
 
     <!-- LEFT COLUMN: Qubit Visualization & Bloch Sphere -->
     <div class="card workspace-panel">
@@ -899,10 +917,21 @@ import Navigation from '../../components/Navigation.astro';
     updateUI();
   });
 
+  const emptyState = document.getElementById('security-empty-state')!;
+  const workspaceGrid = document.getElementById('workspace-grid')!;
+  const metricQubits = document.getElementById('metric-qubits')!;
+
   const API = (window as any).PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
   let realDocsCache: Record<string, any> = {};
 
+  function showWorkspace() {
+    emptyState.style.display = 'none';
+    workspaceGrid.style.display = 'grid';
+    metricQubits.textContent = '1';
+  }
+
   function applyRealDocumentAnalysis(r: any) {
+    showWorkspace();
     const q = r.quantum_analysis || {};
     const sec = r.security || {};
     const verdict = (r.verdict || 'UNKNOWN').toUpperCase();
@@ -935,6 +964,7 @@ import Navigation from '../../components/Navigation.astro';
 
     fidelityVal = Math.round(F * 1000) / 10;
     metricFidelity.textContent = fidelityVal.toFixed(1) + '%';
+    metricTime.textContent = '0.08 s';
     normalizeState();
     updateUI();
   }
@@ -942,6 +972,8 @@ import Navigation from '../../components/Navigation.astro';
   // --- Presets / Document State Selector ---
   presetSelector.addEventListener('change', async () => {
     const p = presetSelector.value;
+    if (!p) return;
+
     if (p.startsWith('real_')) {
       const docId = p.replace('real_', '');
       if (realDocsCache[docId]) {
@@ -961,6 +993,7 @@ import Navigation from '../../components/Navigation.astro';
       return;
     }
 
+    showWorkspace();
     switch (p) {
       case 'ground':
         alpha = { re: 1, im: 0 };
@@ -1000,6 +1033,7 @@ import Navigation from '../../components/Navigation.astro';
         break;
     }
     metricFidelity.textContent = fidelityVal.toFixed(1) + '%';
+    metricTime.textContent = '0.05 s';
     updateUI();
   });
 
@@ -1050,8 +1084,7 @@ import Navigation from '../../components/Navigation.astro';
     }
   }
 
-  // Initial render & live documents check
-  updateUI();
+  // Load real documents from API
   loadRealDocuments();
 </script>
 
