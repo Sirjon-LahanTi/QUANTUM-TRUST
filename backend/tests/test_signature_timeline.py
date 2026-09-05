@@ -13,13 +13,19 @@ from cryptography.x509.oid import NameOID
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import fields, signers
 from pypdf import PdfWriter
+from asn1crypto import cms
 
 from app.services.signature_timeline import (
     analyze_signature_timeline,
+    get_adapter,
     _analyze_byte_range,
     _parse_pdf_date,
+    PdfSignatureTimelineAdapter,
+    Pkcs7CmsSignatureTimelineAdapter,
+    XmlSignatureTimelineAdapter,
+    OfficeDocxXlsxTimelineAdapter,
+    GenericUnsupportedTimelineAdapter,
 )
-from app.services import signature_verifier, certificate_analyzer
 
 
 def _create_signer(common_name: str, org_name: str) -> signers.SimpleSigner:
@@ -58,47 +64,41 @@ def _create_signer(common_name: str, org_name: str) -> signers.SimpleSigner:
     return signer
 
 
-def _generate_multi_signed_pdf() -> bytes:
-    """Generates a PDF with 2 valid incremental signatures."""
+def _generate_multi_signed_pdf(num_sigs: int = 2, same_signer: bool = False) -> bytes:
+    """Generates a PDF with num_sigs valid incremental signatures."""
     writer = PdfWriter()
     writer.add_blank_page(width=612, height=792)
     buf0 = io.BytesIO()
     writer.write(buf0)
     buf0.seek(0)
 
-    # Signature 1
-    s1 = _create_signer("Alice Authority", "QuantumTrust Root Security")
-    w1 = IncrementalPdfFileWriter(buf0)
-    fields.append_signature_field(w1, fields.SigFieldSpec("Signature1", box=(50, 500, 250, 550)))
-    out1 = io.BytesIO()
-    signers.sign_pdf(
-        w1,
-        signers.PdfSignatureMetadata(
-            field_name="Signature1",
-            reason="Primary Document Approval",
-            location="San Francisco, CA"
-        ),
-        signer=s1,
-        output=out1
-    )
+    current_bytes = buf0.getvalue()
+    signer1 = _create_signer("Alice Authority", "QuantumTrust Root Security")
+    signer2 = signer1 if same_signer else _create_signer("Bob CoSigner", "QuantumTrust Audit Dept")
+    signer3 = signer1 if same_signer else _create_signer("Charlie Compliance", "QuantumTrust Compliance")
 
-    # Signature 2 (Incremental Co-Signer)
-    s2 = _create_signer("Bob CoSigner", "QuantumTrust Audit Dept")
-    w2 = IncrementalPdfFileWriter(io.BytesIO(out1.getvalue()))
-    fields.append_signature_field(w2, fields.SigFieldSpec("Signature2", box=(50, 400, 250, 450)))
-    out2 = io.BytesIO()
-    signers.sign_pdf(
-        w2,
-        signers.PdfSignatureMetadata(
-            field_name="Signature2",
-            reason="Secondary Counter-Signature",
-            location="New York, NY"
-        ),
-        signer=s2,
-        output=out2
-    )
+    signers_list = [signer1, signer2, signer3]
 
-    return out2.getvalue()
+    for i in range(num_sigs):
+        w = IncrementalPdfFileWriter(io.BytesIO(current_bytes))
+        f_name = f"Signature{i + 1}"
+        box_y = 500 - (i * 100)
+        fields.append_signature_field(w, fields.SigFieldSpec(f_name, box=(50, box_y, 250, box_y + 50)))
+        out = io.BytesIO()
+        s = signers_list[i % len(signers_list)]
+        signers.sign_pdf(
+            w,
+            signers.PdfSignatureMetadata(
+                field_name=f_name,
+                reason=f"Stage {i + 1} Document Approval",
+                location="San Francisco, CA"
+            ),
+            signer=s,
+            output=out
+        )
+        current_bytes = out.getvalue()
+
+    return current_bytes
 
 
 def _generate_pdf_with_empty_field() -> bytes:
@@ -163,6 +163,7 @@ class TestSignatureTimeline:
         res = analyze_signature_timeline(pdf_bytes)
 
         assert res["timeline_status"] == "ANALYZED"
+        assert res["status"] == "AVAILABLE"
         assert res["total_signature_fields"] >= 1
         assert res["total_signed_signatures"] == 0
         assert res["consistency_status"] == "UNKNOWN"
@@ -173,45 +174,49 @@ class TestSignatureTimeline:
 
     def test_05_multi_signature_valid_timeline(self):
         """Test full timeline extraction and verification for multi-signed PDF."""
-        pdf_bytes = _generate_multi_signed_pdf()
+        pdf_bytes = _generate_multi_signed_pdf(num_sigs=2)
         res = analyze_signature_timeline(pdf_bytes)
 
         assert res["timeline_status"] == "ANALYZED"
+        assert res["status"] == "AVAILABLE"
+        assert res["format"] == "PDF"
+        assert res["signature_count"] == 2
         assert res["total_signed_signatures"] == 2
         assert res["total_signature_fields"] >= 2
         assert res["consistency_status"] == "CONSISTENT"
+        assert res["chronology_confidence"] == "HIGH"
         assert res["timeline_order_confidence"] == "HIGH"
+        assert len(res["events"]) == 2
         assert len(res["signatures"]) == 2
 
-        # Check Signature 1
-        sig1 = res["signatures"][0]
-        assert sig1["sequence_number"] == 1
+        # Check Signature 1 Event
+        sig1 = res["events"][0]
+        assert sig1["sequence"] == 1
         assert sig1["field_name"] == "Signature1"
-        assert sig1["signer"]["common_name"] == "Alice Authority"
-        assert sig1["signer"]["organization"] == "QuantumTrust Root Security"
-        assert sig1["status"] == "VALID"
+        assert sig1["signer_name"] == "Alice Authority"
+        assert sig1["cryptographic_status"] == "VALID"
         assert sig1["post_signature_change"] == "LEGITIMATE_INCREMENTAL_UPDATE"
-        assert sig1["byte_range"]["coverage_status"] == "VALID"
+        assert sig1["coverage_status"] == "VALID"
+        assert sig1["signature_format"] == "CMS"
 
-        # Check Signature 2
-        sig2 = res["signatures"][1]
-        assert sig2["sequence_number"] == 2
+        # Check Signature 2 Event
+        sig2 = res["events"][1]
+        assert sig2["sequence"] == 2
         assert sig2["field_name"] == "Signature2"
-        assert sig2["signer"]["common_name"] == "Bob CoSigner"
-        assert sig2["signer"]["organization"] == "QuantumTrust Audit Dept"
-        assert sig2["status"] == "VALID"
-        assert sig2["revision"]["is_latest_revision"] is True
+        assert sig2["signer_name"] == "Bob CoSigner"
+        assert sig2["cryptographic_status"] == "VALID"
 
         # Check Findings
         finding_codes = [f["code"] for f in res["findings"]]
         assert "MULTIPLE_SIGNATURES_PRESENT" in finding_codes
+        assert "REVISION_SEQUENCE_DETECTED" in finding_codes
         assert "INCREMENTAL_UPDATE_DETECTED" in finding_codes
         assert "LEGITIMATE_INCREMENTAL_UPDATE" in finding_codes
         assert "CERTIFICATE_CHANGED" in finding_codes
 
     def test_06_tampered_multi_signature_pdf(self):
-        """Test that altering bytes in Revision 1 marks Signature 1 as UNAUTHORIZED_SIGNED_CONTENT_CHANGE."""
-        pdf_bytes = bytearray(_generate_multi_signed_pdf())
+        """Test that altering bytes in Revision 1 marks Signature 1 as UNAUTHORIZED_SIGNED_CONTENT_CHANGE / INVALID."""
+        pdf_bytes = bytearray(_generate_multi_signed_pdf(num_sigs=2))
 
         # Modify bytes in earlier signed region (e.g. at offset 1000)
         pdf_bytes[1000:1015] = b"FORGERY_MOD_RAW"
@@ -221,7 +226,7 @@ class TestSignatureTimeline:
         assert res["consistency_status"] == "INCONSISTENT"
 
         # At least one signature should be marked INVALID
-        invalid_sigs = [s for s in res["signatures"] if s["status"] == "INVALID"]
+        invalid_sigs = [s for s in res["events"] if s["cryptographic_status"] == "INVALID"]
         assert len(invalid_sigs) >= 1
 
     def test_07_single_signature_pdf_timeline(self):
@@ -231,7 +236,109 @@ class TestSignatureTimeline:
 
         res = analyze_signature_timeline(pdf_bytes)
         assert res["timeline_status"] == "ANALYZED"
-        assert res["total_signed_signatures"] == 1
+        assert res["status"] == "AVAILABLE"
+        assert res["signature_count"] == 1
         assert res["consistency_status"] == "CONSISTENT"
-        assert len(res["signatures"]) == 1
-        assert res["signatures"][0]["status"] == "VALID"
+        assert len(res["events"]) == 1
+        assert res["events"][0]["cryptographic_status"] == "VALID"
+
+    def test_08_no_signatures_empty_pdf(self):
+        """Test PDF with zero signatures returns NO_SIGNATURES status."""
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        buf0 = io.BytesIO()
+        writer.write(buf0)
+
+        res = analyze_signature_timeline(buf0.getvalue())
+        assert res["status"] == "NO_SIGNATURES"
+        assert res["signature_count"] == 0
+        assert len(res["events"]) == 0
+        finding_codes = [f["code"] for f in res["findings"]]
+        assert "NO_SIGNATURES_PRESENT" in finding_codes
+
+    def test_09_three_signatures_incremental_timeline(self):
+        """Test PDF with 3 incremental co-signers."""
+        pdf_bytes = _generate_multi_signed_pdf(num_sigs=3)
+        res = analyze_signature_timeline(pdf_bytes)
+
+        assert res["status"] == "AVAILABLE"
+        assert res["signature_count"] == 3
+        assert res["consistency_status"] == "CONSISTENT"
+        assert res["chronology_confidence"] == "HIGH"
+        assert len(res["events"]) == 3
+        assert res["events"][0]["sequence"] == 1
+        assert res["events"][1]["sequence"] == 2
+        assert res["events"][2]["sequence"] == 3
+
+    def test_10_same_signer_multiple_times(self):
+        """Test multi-signature document where same signer signs multiple revisions."""
+        pdf_bytes = _generate_multi_signed_pdf(num_sigs=2, same_signer=True)
+        res = analyze_signature_timeline(pdf_bytes)
+
+        assert res["status"] == "AVAILABLE"
+        assert res["signature_count"] == 2
+        assert res["events"][0]["signer_name"] == res["events"][1]["signer_name"]
+        finding_codes = [f["code"] for f in res["findings"]]
+        assert "MULTIPLE_SIGNATURES_PRESENT" in finding_codes
+        # Since certificates are identical, CERTIFICATE_CHANGED should not be emitted
+        assert "CERTIFICATE_CHANGED" not in finding_codes
+
+    def test_11_cms_pkcs7_standalone_adapter(self):
+        """Test standalone CMS/PKCS#7 adapter with synthetic ContentInfo."""
+        # Simple synthetic test for Pkcs7CmsSignatureTimelineAdapter
+        adapter = Pkcs7CmsSignatureTimelineAdapter(b"INVALID_OR_EMPTY_CMS_BYTES", "test.p7s")
+        res = adapter.analyze()
+        assert res["format"] == "CMS/PKCS#7"
+        assert res["status"] in ("NOT_AVAILABLE", "NO_SIGNATURES")
+
+    def test_12_xmldsig_adapter(self):
+        """Test XMLDSig adapter with a structured XMLDSig document."""
+        xml_content = b"""<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <data id="d1">Approved Content</data>
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="sig-xml-1">
+    <ds:SignedInfo>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+      <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+    </ds:SignedInfo>
+    <ds:SignatureValue>dummySigVal==</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:KeyName>Alice Authority</ds:KeyName>
+    </ds:KeyInfo>
+  </ds:Signature>
+</document>"""
+        res = analyze_signature_timeline(xml_content, file_type="XML", filename="document.xml")
+        assert res["status"] == "AVAILABLE"
+        assert res["format"] == "XMLDSig"
+        assert res["signature_count"] == 1
+        assert res["events"][0]["signature_id"] == "sig-xml-1"
+        assert res["events"][0]["signature_format"] == "XMLDSig"
+
+    def test_13_unsupported_format_docx_no_fabrication(self):
+        """Test DOCX format returns explicit NOT_AVAILABLE with zero fabricated events."""
+        docx_bytes = b"PK\x03\x04synthetic_docx_archive"
+        res = analyze_signature_timeline(docx_bytes, file_type="DOCX", filename="contract.docx")
+        assert res["status"] == "NOT_AVAILABLE"
+        assert res["format"] == "DOCX"
+        assert res["signature_count"] == 0
+        assert len(res["events"]) == 0
+        assert "Reliable signature chronology is not available" in res["reason"]
+        finding_codes = [f["code"] for f in res["findings"]]
+        assert "TIMELINE_NOT_AVAILABLE" in finding_codes
+
+    def test_14_unsupported_binary_format_no_fabrication(self):
+        """Test generic binary / text format returns NOT_AVAILABLE."""
+        text_bytes = b"Hello, this is a plain text document without any signatures."
+        res = analyze_signature_timeline(text_bytes, file_type="TXT", filename="notes.txt")
+        assert res["status"] == "NOT_AVAILABLE"
+        assert res["format"] == "TXT"
+        assert res["signature_count"] == 0
+        assert len(res["events"]) == 0
+        assert res["reason"] is not None
+
+    def test_15_anti_fabrication_explicit_values(self):
+        """Test that unavailable information is explicitly marked UNKNOWN/null and never fabricated."""
+        res = analyze_signature_timeline(b"", file_type="PDF", filename="empty.pdf")
+        assert res["status"] == "NO_SIGNATURES"
+        assert res["signature_count"] == 0
+        assert res["events"] == []

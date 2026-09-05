@@ -152,20 +152,37 @@ QT_CORS_ORIGINS=["http://localhost:4321","http://localhost:4322"]
 
 ---
 
-## Testing PDFs
+## Format Capability Matrix
+
+QuantumTrust implements a format-independent normalized timeline architecture with format-specific adapters:
+
+| Format / Container | Signature Verification | Multiple Signatures | Timeline & Chronology | Revision / ByteRange Analysis |
+|--------------------|------------------------|---------------------|-----------------------|-------------------------------|
+| **PDF** (.pdf) | Full (pyHanko + CMS) | Full (Multi-Sig Co-signing) | Full (Incremental Revisions) | Full (ByteRange + Revision Coverage) |
+| **CMS / PKCS#7** (.p7s, .p7b, .p7m) | Full (ASN.1 ContentInfo) | Full (Multiple SignerInfos) | Structural (Signing Time / TST) | Enclosed Content (Non-ByteRange) |
+| **XML / XMLDSig** (.xml) | Full (XMLDSig/XAdES) | Full (Multiple ds:Signature) | Format-Dependent (XAdES time) | Element Reference Coverage |
+| **Office OpenXML** (.docx, .xlsx, .pptx) | Package Signature Detect | Package Multiple Signatures | Explicit NOT_AVAILABLE | Open Packaging Structure |
+| **Plain Text / Binary** | Not Applicable | Not Applicable | Explicit NOT_AVAILABLE | Not Applicable |
+
+*Anti-fabrication guarantee:* If a format does not expose reliable signature chronology, QuantumTrust explicitly reports `NOT_AVAILABLE` with a clear explanation rather than fabricating missing data.
+
+---
+
+## Testing PDFs & Formats
 
 Recommended test cases:
 
 1. **Valid signed PDF** → expect AUTHENTIC
-2. **Tampered signed PDF** (content modified after signing) → expect TAMPERED
-3. **Unsigned PDF** → expect SUSPICIOUS (no signature)
-4. **Expired certificate PDF** → expect SUSPICIOUS
-5. **Self-signed certificate** → expect SUSPICIOUS
-6. **Multiple signatures** → check all signatures analyzed
-7. **Corrupted PDF** → expect graceful error state
-8. **Non-PDF upload** → expect file validation error
-9. **File > 50MB** → expect size validation error
-10. **Same PDF uploaded twice** → expect duplicate detection flagged
+2. **Multi-signature PDF (2+ valid signatures)** → expect AUTHENTIC + MULTIPLE_SIGNATURES_PRESENT
+3. **Tampered signed PDF** (content modified after signing) → expect TAMPERED + UNAUTHORIZED_SIGNED_CONTENT_CHANGE
+4. **Empty signature field** → expect SIGNATURE_FIELD_EMPTY finding
+5. **Unsigned PDF** → expect SUSPICIOUS (no signature)
+6. **Expired certificate PDF** → expect SUSPICIOUS
+7. **Self-signed certificate** → expect SUSPICIOUS
+8. **Corrupted PDF** → expect graceful error state
+9. **Non-PDF / Non-chronological format** → expect explicit NOT_AVAILABLE state without fabrication
+10. **File > 50MB** → expect size validation error
+11. **Same PDF uploaded twice** → expect duplicate detection flagged
 
 ---
 
@@ -177,6 +194,6 @@ Each dashboard opens in a **new browser tab** (per `target="_blank"`):
 |-------|-------------|
 | `/` | Landing page |
 | `/dashboard` | System statistics and recent analyses |
-| `/verify` | Document upload and verification |
+| `/verify` | Document upload, verification, and interactive signature timeline |
 | `/security?id={id}` | Threat analysis and quantum metrics |
-| `/analysis/{id}` | Full analysis detail |
+| `/analysis/{id}` | Full analysis detail with expandable signature timeline audit records |

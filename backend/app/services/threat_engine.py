@@ -133,7 +133,7 @@ def _evaluate_conditions(
         ),
         "has_javascript":       bool(pdf.get("has_js", False)),
         "has_embedded_files":   bool(pdf.get("has_embedded_files", False)),
-        "excessive_updates":    int(pdf.get("incremental_update_count", 0)) > 2,
+        "excessive_updates":    int(pdf.get("incremental_update_count", 0)) > max(2, int(sig.get("count", 0) or 0)),
         "sig_algo_unknown":     sig_status not in ("NONE",) and not sig.get("signature_algorithm"),
         "cert_unavailable":     cert_trust == "UNAVAILABLE",
         "integrity_unknown":    integ_status == "UNKNOWN",

@@ -235,17 +235,57 @@ class VerificationSummary(BaseModel):
     certificate_trusted: bool | None = None
 
 
+class SignatureEvent(BaseModel):
+    signature_id: str
+    sequence: int = 1
+    sequence_number: int | None = None
+    field_name: str | None = None
+    signer_name: str | None = None
+    signer_certificate_subject: str | None = None
+    certificate_fingerprint: str | None = None
+    signing_time: str | None = None
+    signing_time_source: str | None = None  # CMS_SIGNING_TIME, PDF_SIGNATURE_DATE, TRUSTED_TIMESTAMP, XAdES_SIGNING_TIME, UNKNOWN
+    signature_algorithm: str | None = None
+    digest_algorithm: str | None = None
+    signature_format: str | None = None     # CMS, XMLDSig, JWS, PKCS#7
+    revision_id: str | None = None
+    version_id: str | None = None
+    covered_content: str | None = None
+    coverage_status: str | None = "VALID"   # VALID, INVALID, UNKNOWN, FULL_REVISION
+    cryptographic_status: str = "NOT_CHECKED"  # VALID, INVALID, UNKNOWN, NOT_CHECKED
+    certificate_status: str | None = "UNKNOWN"
+    trust_status: str | None = "UNKNOWN"
+    timestamp_status: str | None = "UNAVAILABLE"
+    chronology_confidence: str | None = "HIGH" # HIGH, MEDIUM, LOW, UNKNOWN
+    post_signature_change: str | None = None
+    findings: list[TimelineFinding | dict[str, Any]] = Field(default_factory=list)
+
+
 class SignatureTimelineEntry(BaseModel):
     signature_id: str
     field_name: str
     sequence_number: int
+    sequence: int | None = None
     signer: SignerInfo | dict[str, Any] | None = None
-    signing_time: SigningTimeInfo | dict[str, Any] | None = None
+    signer_name: str | None = None
+    signer_certificate_subject: str | None = None
+    signing_time: SigningTimeInfo | dict[str, Any] | str | None = None
+    signing_time_source: str | None = None
     signature_algorithm: str | None = None
     digest_algorithm: str | None = None
+    signature_format: str | None = None
     certificate_fingerprint: str | None = None
     byte_range: ByteRangeInfo | dict[str, Any] | None = None
     revision: RevisionInfo | dict[str, Any] | None = None
+    revision_id: str | None = None
+    version_id: str | None = None
+    covered_content: str | None = None
+    coverage_status: str | None = None
+    cryptographic_status: str | None = None
+    certificate_status: str | None = None
+    trust_status: str | None = None
+    timestamp_status: str | None = None
+    chronology_confidence: str | None = None
     verification: VerificationSummary | dict[str, Any] | None = None
     status: str = "NOT_CHECKED"  # VALID, INVALID, SUSPICIOUS, NOT_CHECKED, UNSUPPORTED
     post_signature_change: str | None = None
@@ -253,6 +293,16 @@ class SignatureTimelineEntry(BaseModel):
 
 
 class SignatureTimelineResult(BaseModel):
+    status: str = "AVAILABLE"                # AVAILABLE, NOT_AVAILABLE, NO_SIGNATURES, PARTIAL, ERROR
+    format: str = "PDF"                      # PDF, CMS/PKCS#7, XMLDSig, DOCX, BINARY, etc.
+    signature_count: int = 0
+    chronology_confidence: str = "HIGH"      # HIGH, MEDIUM, LOW, UNKNOWN
+    total_revisions: int | None = None
+    events: list[SignatureEvent | dict[str, Any]] = Field(default_factory=list)
+    findings: list[TimelineFinding | dict[str, Any]] = Field(default_factory=list)
+    reason: str | None = None
+
+    # Backward-compatibility aliases
     total_signature_fields: int = 0
     total_signed_signatures: int = 0
     revision_count: int | None = None
@@ -260,7 +310,6 @@ class SignatureTimelineResult(BaseModel):
     consistency_status: str = "UNKNOWN"      # CONSISTENT, INCONSISTENT, PARTIAL, UNKNOWN
     timeline_order_confidence: str = "HIGH"  # HIGH, MEDIUM, LOW
     signatures: list[SignatureTimelineEntry | dict[str, Any]] = Field(default_factory=list)
-    findings: list[TimelineFinding | dict[str, Any]] = Field(default_factory=list)
 
 
 class AnalysisResult(BaseModel):

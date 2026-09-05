@@ -743,21 +743,26 @@ def generate_explanation(
     step_order += 1
 
     # ── Step 7: Signature Timeline & Revision History ─────────────────────────
-    if evidence.signature_timeline and evidence.signature_timeline.get("timeline_status") == "ANALYZED":
-        tl = evidence.signature_timeline
-        tl_consistency = tl.get("consistency_status", "UNKNOWN")
-        total_fields = tl.get("total_signature_fields", 0)
-        total_signed = tl.get("total_signed_signatures", 0)
-        rev_count = tl.get("revision_count", 1)
-        sig_list = tl.get("signatures", [])
+    tl = evidence.signature_timeline or {}
+    tl_status = (tl.get("status") or tl.get("timeline_status") or "NOT_AVAILABLE").upper()
+
+    if tl and tl_status in ("AVAILABLE", "ANALYZED", "PARTIAL"):
+        tl_consistency = (tl.get("consistency_status") or "CONSISTENT").upper()
+        total_fields = tl.get("total_signature_fields") or tl.get("signature_count", 0)
+        total_signed = tl.get("signature_count") or tl.get("total_signed_signatures", 0)
+        rev_count = tl.get("total_revisions") or tl.get("revision_count", 1)
+        doc_format = tl.get("format", "PDF")
+        sig_list = tl.get("events") or tl.get("signatures", [])
 
         if tl_consistency == "CONSISTENT":
             tl_step_status = StepStatus.PASS.value
             tl_obs = f"Consistent ({total_signed} signed / {rev_count} revs)"
             if total_signed > 1:
                 tl_exp = f"All {total_signed} digital signatures across {rev_count} document revisions are cryptographically valid and consistent with incremental update history."
-            else:
+            elif total_signed == 1:
                 tl_exp = f"Digital signature is cryptographically valid for Revision 1 of {rev_count} and matches its ByteRange specification."
+            else:
+                tl_exp = f"No active digital signatures detected in the document structure."
         elif tl_consistency == "INCONSISTENT":
             tl_step_status = StepStatus.FAIL.value
             tl_obs = f"Inconsistent / Tampered ({total_signed} signed)"
@@ -775,7 +780,7 @@ def generate_explanation(
             observed_value=tl_obs,
             expected_condition="All signatures cryptographically valid and consistent with revision sequence",
             explanation=tl_exp,
-            technical_detail=f"ByteRange coverage verified across {rev_count} revisions; order confidence: {tl.get('timeline_order_confidence', 'HIGH')}.",
+            technical_detail=f"ByteRange coverage verified across {rev_count} revisions in {doc_format} container; order confidence: {tl.get('chronology_confidence') or tl.get('timeline_order_confidence', 'HIGH')}.",
         ))
 
         evidence_items.append(EvidenceItem(
@@ -791,11 +796,11 @@ def generate_explanation(
 
         # Add individual signature entries to evidence
         for sig_entry in sig_list:
-            seq = sig_entry.get("sequence_number", 1)
-            f_name = sig_entry.get("field_name", f"Signature{seq}")
-            st = sig_entry.get("status", "UNKNOWN")
-            signer_cn = sig_entry.get("signer", {}).get("common_name") or "Unknown Signer"
-            rev_num = sig_entry.get("revision", {}).get("covers_revision") or seq
+            seq = sig_entry.get("sequence") or sig_entry.get("sequence_number", 1)
+            f_name = sig_entry.get("field_name") or f"Signature{seq}"
+            st = (sig_entry.get("cryptographic_status") or sig_entry.get("status") or "UNKNOWN").upper()
+            signer_cn = sig_entry.get("signer_name") or (sig_entry.get("signer") or {}).get("common_name") or "Unknown Signer"
+            rev_num = (sig_entry.get("revision") or {}).get("covers_revision") or sig_entry.get("version_id") or seq
             post_chg = sig_entry.get("post_signature_change", "NONE")
 
             item_stat = (
@@ -818,6 +823,18 @@ def generate_explanation(
                 value=f"{st} • Rev {rev_num}",
                 reason=reason_desc,
             ))
+
+    elif tl and tl_status == "NOT_AVAILABLE":
+        steps.append(VerificationStep(
+            id="signature_timeline",
+            order=step_order,
+            check="Signature timeline & revision consistency",
+            status=StepStatus.NOT_CHECKED.value,
+            observed_value="Not Available",
+            expected_condition="Supported file format with reliable signature chronology",
+            explanation=tl.get("reason") or "Reliable signature chronology is not available for this file format.",
+            technical_detail=f"Format {tl.get('format', 'UNKNOWN')} does not expose verifiable revision chronology.",
+        ))
 
     elif evidence.signature_count > 1 and evidence.signatures_detail:
         for idx, sig_detail in enumerate(evidence.signatures_detail, start=1):

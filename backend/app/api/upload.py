@@ -238,38 +238,39 @@ async def analyze_pdf(
     dup_result["match_type"] = match_type
 
     # ── 12. Signature Timeline & Multi-Signature Analysis ──────────────────────
-    if is_pdf:
-        try:
-            sig_timeline = await asyncio.to_thread(
-                signature_timeline.analyze_signature_timeline,
-                pdf_bytes=pdf_bytes,
-                sig_result=sig_result,
-                cert_info=cert_info,
-                integrity_result=integrity_result,
-                pdf_structure=pdf_structure,
-            )
-        except Exception as exc:
-            logger.error("Signature timeline analysis failed: %s", exc)
-            sig_timeline = {
-                "total_signature_fields": sig_result.get("count", 0),
-                "total_signed_signatures": len(sig_result.get("signatures", [])),
-                "revision_count": pdf_structure.get("incremental_update_count", 0) + 1,
-                "timeline_status": "ERROR",
-                "consistency_status": "UNKNOWN",
-                "timeline_order_confidence": "LOW",
-                "signatures": [],
-                "findings": [],
-            }
-    else:
+    detected_file_type = "PDF" if is_pdf else (Path(filename).suffix.lstrip(".").upper() or "BINARY")
+    try:
+        sig_timeline = await asyncio.to_thread(
+            signature_timeline.analyze_signature_timeline,
+            file_path_or_bytes=pdf_bytes,
+            file_type=detected_file_type,
+            existing_verification_result=sig_result,
+            certificate_inspection=cert_inspection,
+            pdf_bytes=pdf_bytes,
+            sig_result=sig_result,
+            cert_info=cert_info,
+            integrity_result=integrity_result,
+            pdf_structure=pdf_structure,
+            filename=filename,
+        )
+    except Exception as exc:
+        logger.error("Signature timeline analysis failed: %s", exc)
         sig_timeline = {
-            "total_signature_fields": 0,
-            "total_signed_signatures": 0,
-            "revision_count": None,
-            "timeline_status": "NOT_AVAILABLE",
-            "consistency_status": "UNKNOWN",
-            "timeline_order_confidence": "HIGH",
-            "signatures": [],
+            "status": "ERROR",
+            "format": detected_file_type,
+            "signature_count": sig_result.get("count", 0),
+            "chronology_confidence": "UNKNOWN",
+            "total_revisions": pdf_structure.get("incremental_update_count", 0) + 1 if is_pdf else None,
+            "events": [],
             "findings": [],
+            "reason": str(exc),
+            "total_signature_fields": sig_result.get("count", 0),
+            "total_signed_signatures": len(sig_result.get("signatures", [])),
+            "revision_count": pdf_structure.get("incremental_update_count", 0) + 1 if is_pdf else None,
+            "timeline_status": "ERROR",
+            "consistency_status": "UNKNOWN",
+            "timeline_order_confidence": "LOW",
+            "signatures": [],
         }
 
     # ── 13. Explainable Verification (Deterministic rule-based explanation) ───
