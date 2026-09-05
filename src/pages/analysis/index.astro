@@ -84,15 +84,87 @@ import Navigation from '../../components/Navigation.astro';
     }
   }
 
+  function renderTable(data: any[]) {
+    const container = document.getElementById('history-container')!;
+    const clearBtn = document.getElementById('clear-all-btn');
+
+    if (!Array.isArray(data) || data.length === 0) {
+      renderEmptyState();
+      return;
+    }
+
+    if (clearBtn) {
+      clearBtn.style.display = 'inline-flex';
+      clearBtn.onclick = clearAll;
+    }
+
+    const rows = data.map((a: any) => {
+      const date = a.created_at ? new Date(a.created_at).toLocaleString() : '—';
+      const verdict = a.verdict ?? '—';
+      const threat  = a.security?.threat_level ?? '—';
+      const fname = a.document?.filename || 'Document';
+      return `
+        <tr id="row-${a.analysis_id}">
+          <td class="mono-cell" style="font-size:var(--text-xs);color:var(--text-muted);">${a.analysis_id}</td>
+          <td><a href="/analysis/${a.analysis_id}" rel="noopener noreferrer" style="color:var(--text-accent)">${fname}</a></td>
+          <td class="mono-cell">${formatBytes(a.document?.file_size || 0)}</td>
+          <td><span class="badge ${verdictClass(verdict)}">${verdict}</span></td>
+          <td><span class="badge ${threatClass(threat)}">${threat}</span></td>
+          <td class="num-cell mono-cell">${a.security?.threat_score ?? '—'}</td>
+          <td style="font-size:var(--text-xs);color:var(--text-muted)">${date}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <a href="/analysis/${a.analysis_id}" rel="noopener noreferrer" class="btn btn-secondary btn-sm">View</a>
+              <button class="btn btn-danger btn-sm del-btn" data-id="${a.analysis_id}" data-file="${fname.replace(/"/g, '&quot;')}" style="cursor:pointer;" title="Delete this analysis">
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Analysis ID</th>
+            <th>Document</th>
+            <th>Size</th>
+            <th>Verdict</th>
+            <th>Threat</th>
+            <th>Score</th>
+            <th>Analyzed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    // Attach delete listeners
+    container.querySelectorAll('.del-btn').forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const file = btn.getAttribute('data-file');
+        if (id) deleteSingle(id, file);
+      });
+    });
+  }
+
   async function deleteSingle(analysisId: string, filename: string) {
     const confirmed = window.confirm(`Are you sure you want to delete the analysis for "${filename}"?`);
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${API}/api/analysis/${analysisId}`, {
+      await fetch(`${API}/api/analysis/${analysisId}`, {
         method: 'DELETE',
-      });
-      if (!res.ok) throw new Error(`Failed to delete (HTTP ${res.status})`);
+      }).catch(() => null);
+
+      try {
+        const existing = JSON.parse(localStorage.getItem('qt_analysis_history') || '[]');
+        const filtered = existing.filter((item: any) => item.analysis_id !== analysisId);
+        localStorage.setItem('qt_analysis_history', JSON.stringify(filtered));
+        localStorage.removeItem('qt_analysis_' + analysisId);
+      } catch (_) {}
 
       const row = document.getElementById(`row-${analysisId}`);
       if (row) {
@@ -117,10 +189,13 @@ import Navigation from '../../components/Navigation.astro';
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${API}/api/analyses`, {
+      await fetch(`${API}/api/analyses`, {
         method: 'DELETE',
-      });
-      if (!res.ok) throw new Error(`Failed to clear history (HTTP ${res.status})`);
+      }).catch(() => null);
+
+      try {
+        localStorage.removeItem('qt_analysis_history');
+      } catch (_) {}
 
       renderEmptyState();
       showBanner('All analysis history deleted successfully.');
@@ -130,81 +205,32 @@ import Navigation from '../../components/Navigation.astro';
   }
 
   async function load() {
-    const container = document.getElementById('history-container')!;
-    const clearBtn = document.getElementById('clear-all-btn');
-
     try {
       const res = await fetch(`${API}/api/analyses?limit=200`);
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          try {
+            localStorage.setItem('qt_analysis_history', JSON.stringify(data));
+          } catch (_) {}
+          renderTable(data);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('API fetch failed, falling back to local history:', err);
+    }
 
-      if (!Array.isArray(data) || data.length === 0) {
-        renderEmptyState();
+    // Fallback to localStorage history
+    try {
+      const local = JSON.parse(localStorage.getItem('qt_analysis_history') || '[]');
+      if (Array.isArray(local) && local.length > 0) {
+        renderTable(local);
         return;
       }
+    } catch (_) {}
 
-      if (clearBtn) {
-        clearBtn.style.display = 'inline-flex';
-        clearBtn.onclick = clearAll;
-      }
-
-      const rows = data.map((a: any) => {
-        const date = new Date(a.created_at).toLocaleString();
-        const verdict = a.verdict ?? '—';
-        const threat  = a.security?.threat_level ?? '—';
-        const fname = a.document?.filename || 'Document';
-        return `
-          <tr id="row-${a.analysis_id}">
-            <td class="mono-cell" style="font-size:var(--text-xs);color:var(--text-muted);">${a.analysis_id}</td>
-            <td><a href="/analysis/${a.analysis_id}" rel="noopener noreferrer" style="color:var(--text-accent)">${fname}</a></td>
-            <td class="mono-cell">${formatBytes(a.document?.file_size || 0)}</td>
-            <td><span class="badge ${verdictClass(verdict)}">${verdict}</span></td>
-            <td><span class="badge ${threatClass(threat)}">${threat}</span></td>
-            <td class="num-cell mono-cell">${a.security?.threat_score ?? '—'}</td>
-            <td style="font-size:var(--text-xs);color:var(--text-muted)">${date}</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <a href="/analysis/${a.analysis_id}" rel="noopener noreferrer" class="btn btn-secondary btn-sm">View</a>
-                <button class="btn btn-danger btn-sm del-btn" data-id="${a.analysis_id}" data-file="${fname.replace(/"/g, '&quot;')}" style="cursor:pointer;" title="Delete this analysis">
-                  Delete
-                </button>
-              </div>
-            </td>
-          </tr>`;
-      }).join('');
-
-      container.innerHTML = `
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Analysis ID</th>
-              <th>Document</th>
-              <th>Size</th>
-              <th>Verdict</th>
-              <th>Threat</th>
-              <th>Score</th>
-              <th>Analyzed</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>`;
-
-      // Attach delete listeners
-      container.querySelectorAll('.del-btn').forEach((btn: any) => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-id');
-          const file = btn.getAttribute('data-file');
-          if (id) deleteSingle(id, file);
-        });
-      });
-    } catch (err) {
-      if (clearBtn) clearBtn.style.display = 'none';
-      container.innerHTML = `
-        <div class="error-banner" style="margin:16px;">
-          Backend unavailable — start the QuantumTrust API server to load analysis history.
-        </div>`;
-    }
+    renderEmptyState();
   }
 
   load();

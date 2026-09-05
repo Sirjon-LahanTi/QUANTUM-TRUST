@@ -142,19 +142,32 @@ const { id } = Astro.params;
   async function load() {
     try {
       const res = await fetch(`${API}/api/analysis/${analysisId}`);
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-        throw new Error(e.detail ?? 'Not found');
+      if (res.ok) {
+        const r = await res.json();
+        try { localStorage.setItem('qt_analysis_' + analysisId, JSON.stringify(r)); } catch (_) {}
+        document.getElementById('loading-state').style.display = 'none';
+        render(r);
+        document.getElementById('analysis-content').style.display = 'block';
+        return;
       }
-      const r = await res.json();
-      document.getElementById('loading-state').style.display = 'none';
-      render(r);
-      document.getElementById('analysis-content').style.display = 'block';
     } catch (err) {
-      document.getElementById('loading-state').style.display = 'none';
-      document.getElementById('error-msg').textContent = `Failed to load analysis: ${err.message}`;
-      document.getElementById('error-state').style.display = 'block';
+      console.warn('API detail fetch failed, trying local storage cache:', err);
     }
+
+    try {
+      const cached = localStorage.getItem('qt_analysis_' + analysisId);
+      if (cached) {
+        const r = JSON.parse(cached);
+        document.getElementById('loading-state').style.display = 'none';
+        render(r);
+        document.getElementById('analysis-content').style.display = 'block';
+        return;
+      }
+    } catch (_) {}
+
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-msg').textContent = `Failed to load analysis: Analysis ID "${analysisId}" not found.`;
+    document.getElementById('error-state').style.display = 'block';
   }
 
   function render(r) {

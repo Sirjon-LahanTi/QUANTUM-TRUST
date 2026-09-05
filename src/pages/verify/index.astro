@@ -234,6 +234,25 @@ import Navigation from '../../components/Navigation.astro';
       // Parse response JSON first
       const result = await response.json();
 
+      // Persist to localStorage for client-side history resilience
+      try {
+        const existingHistory = JSON.parse(localStorage.getItem('qt_analysis_history') || '[]');
+        const summaryItem = {
+          analysis_id: result.analysis_id,
+          document: result.document,
+          signature: result.signature,
+          security: result.security,
+          verdict: result.verdict,
+          created_at: result.created_at || new Date().toISOString()
+        };
+        const filtered = existingHistory.filter((h: any) => h.analysis_id !== result.analysis_id);
+        filtered.unshift(summaryItem);
+        localStorage.setItem('qt_analysis_history', JSON.stringify(filtered.slice(0, 100)));
+        localStorage.setItem('qt_analysis_' + result.analysis_id, JSON.stringify(result));
+      } catch (e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+
       // Animate remaining steps
       const stepDelay = [150, 200, 250, 300, 350, 250, 200];
       const midSteps = STEPS.slice(1, -1);
