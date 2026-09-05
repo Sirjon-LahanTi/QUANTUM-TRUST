@@ -31,7 +31,79 @@ async def get_analysis(
             detail=f"Analysis '{analysis_id}' not found.",
         )
 
-    return record.get_full_result()
+    res = record.get_full_result()
+    if res:
+        if "certificate_inspection" not in res:
+            sig_data = res.get("signature", {})
+            cert_data = res.get("certificate", {})
+            if sig_data.get("present"):
+                res["certificate_inspection"] = {
+                    "status": "SUCCESS",
+                    "certificate": {
+                        "version": 3,
+                        "serial_number": cert_data.get("serial_number"),
+                        "subject": {"common_name": cert_data.get("subject"), "raw_dn": cert_data.get("subject")},
+                        "issuer": {"common_name": cert_data.get("issuer"), "raw_dn": cert_data.get("issuer")},
+                        "signature_algorithm": sig_data.get("signature_algorithm"),
+                        "is_self_signed": (cert_data.get("subject") == cert_data.get("issuer")),
+                    },
+                    "public_key": {
+                        "algorithm": sig_data.get("public_key_algorithm") or "RSA",
+                        "key_size": sig_data.get("key_size"),
+                        "curve": None,
+                        "exponent": None,
+                    },
+                    "validity": {
+                        "status": "EXPIRED" if cert_data.get("is_expired") else "VALID",
+                        "not_before": cert_data.get("valid_from"),
+                        "not_after": cert_data.get("valid_until"),
+                    },
+                    "trust": {
+                        "status": cert_data.get("trust_status") or "UNKNOWN",
+                        "reason": "Retrieved from analysis record.",
+                    },
+                    "fingerprint": {"algorithm": "SHA-256", "value": None},
+                    "chain": [],
+                    "extensions": [],
+                    "security_assessment": {
+                        "key_strength": "ACCEPTABLE" if (sig_data.get("key_size") or 0) >= 2048 else "WEAK",
+                        "policy": "QuantumTrust Default Cryptographic Policy v1.0",
+                        "observations": [],
+                    },
+                    "findings": [],
+                }
+            else:
+                res["certificate_inspection"] = {
+                    "status": "NOT_AVAILABLE",
+                    "reason": "No digital signature present in document.",
+                }
+
+        if "explainable_verification" not in res:
+            from app.services import explainable_verification
+            sig_data = res.get("signature", {})
+            cert_data = res.get("certificate", {})
+            intg_data = res.get("integrity", {})
+            doc_data = res.get("document", {})
+            dup_data = res.get("duplicate", {})
+            sec_data = res.get("security", {})
+            q_data = res.get("quantum_analysis", {})
+            verdict = res.get("verdict", "SUSPICIOUS")
+
+            evidence = explainable_verification.extract_evidence_from_analysis(
+                sig_result=sig_data,
+                cert_info=cert_data,
+                integrity_result=intg_data,
+                pdf_structure={"pdf_version": doc_data.get("pdf_version"), "suspicious_signals": []},
+                dup_result=dup_data,
+                threat_result=sec_data,
+                quantum_result=q_data,
+                cert_inspection=res.get("certificate_inspection"),
+            )
+            explanation_res = explainable_verification.generate_explanation(evidence, verdict)
+            res["explainable_verification"] = explanation_res.model_dump()
+
+    return res
+
 
 
 @router.get("/analyses")

@@ -64,10 +64,43 @@ async def get_report(
         for t in sec.get("detected_threats", [])
     ) or "<li style='color:#4A5A78;font-family:monospace;font-size:13px;'>No threats detected</li>"
 
+    exp  = r.get("explainable_verification")
+    if not exp:
+        from app.services import explainable_verification
+        evidence = explainable_verification.extract_evidence_from_analysis(
+            sig_result=sig,
+            cert_info=cert,
+            integrity_result=intg,
+            pdf_structure={"pdf_version": doc.get("pdf_version"), "suspicious_signals": []},
+            dup_result=dup,
+            threat_result=sec,
+            quantum_result=q,
+        )
+        exp = explainable_verification.generate_explanation(evidence, verdict).model_dump()
+
+
+    trace_steps = exp.get("verification_steps", [])
+    trace_rows = []
+    for st in trace_steps:
+        s_val = st.get("status", "PASS")
+        s_color = "#22C55E" if s_val == "PASS" else "#EF4444" if s_val == "FAIL" else "#F59E0B" if s_val == "WARNING" else "#7A90B8"
+        s_badge = f"<span style='padding:2px 6px;border-radius:3px;font-size:10px;font-family:monospace;font-weight:600;background:{s_color}22;color:{s_color};border:1px solid {s_color}66;'>{s_val}</span>"
+        obs = f"<div style='font-size:12px;color:#A8C4F0;'>{st.get('observed_value') or ''}</div>" if st.get('observed_value') else ""
+        expl = f"<div style='font-size:11px;color:#7A90B8;margin-top:2px;'>{st.get('explanation') or ''}</div>"
+        trace_rows.append(f"""
+        <tr>
+          <td style='padding:6px 12px;font-family:monospace;font-size:11px;color:#7A90B8;border-bottom:1px solid #131D2E;width:30px;'>{st.get('order')}</td>
+          <td style='padding:6px 12px;font-family:monospace;font-size:12px;color:#E2E8F5;border-bottom:1px solid #131D2E;'>{st.get('check')}</td>
+          <td style='padding:6px 12px;border-bottom:1px solid #131D2E;width:90px;'>{s_badge}</td>
+          <td style='padding:6px 12px;border-bottom:1px solid #131D2E;'>{obs}{expl}</td>
+        </tr>""")
+    trace_rows_html = "".join(trace_rows) or "<tr><td colspan='4' style='padding:12px;color:#7A90B8;text-align:center;'>No trace steps available</td></tr>"
+
     def val(v: Any, fallback: str = "Not available") -> str:
         return str(v) if v is not None else fallback
 
     def row(label: str, value: Any, mono: bool = False) -> str:
+
         style = "font-family:monospace;color:#A8C4F0;" if mono else ""
         return f"""
         <tr>
@@ -115,6 +148,34 @@ async def get_report(
   </div>
 
   <div class="section">
+    <div class="section-title">WHY THIS VERDICT? (EXPLAINABLE VERIFICATION)</div>
+    <div style="background:#0F1520;border:1px solid #1E2D45;border-left:3px solid {verdict_color};padding:16px;border-radius:4px;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:600;color:#E2E8F5;margin-bottom:8px;">
+        {val(exp.get('final_reason'), 'Digital signature and document integrity evaluated.')}
+      </div>
+      <div style="font-family:monospace;font-size:12px;color:#7A90B8;">
+        Confidence: <strong style="color:#E2E8F5;">{val(exp.get('confidence'), 'HIGH')}</strong> &nbsp;|&nbsp;
+        Methodology: {val(exp.get('methodology'))}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr style="background:#131D2E;text-align:left;">
+          <th style="padding:8px 12px;font-family:monospace;font-size:11px;color:#7A90B8;">#</th>
+          <th style="padding:8px 12px;font-family:monospace;font-size:11px;color:#7A90B8;">Verification Check</th>
+          <th style="padding:8px 12px;font-family:monospace;font-size:11px;color:#7A90B8;">Status</th>
+          <th style="padding:8px 12px;font-family:monospace;font-size:11px;color:#7A90B8;">Observed / Technical Finding</th>
+        </tr>
+      </thead>
+      <tbody>
+        {trace_rows_html}
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="section">
     <div class="section-title">DOCUMENT INFORMATION</div>
     <table>
       {row('Filename', doc.get('filename'))}
@@ -139,7 +200,7 @@ async def get_report(
   </div>
 
   <div class="section">
-    <div class="section-title">CERTIFICATE</div>
+    <div class="section-title">CERTIFICATE &amp; PUBLIC KEY INSPECTION</div>
     <table>
       {row('Subject', cert.get('subject'))}
       {row('Issuer', cert.get('issuer'))}
@@ -147,6 +208,9 @@ async def get_report(
       {row('Valid From', cert.get('valid_from'))}
       {row('Valid Until', cert.get('valid_until'))}
       {row('Trust Status', cert.get('trust_status'))}
+      {row('Certificate Fingerprint (SHA-256)', (r.get('certificate_inspection') or {}).get('fingerprint', {}).get('value') if isinstance((r.get('certificate_inspection') or {}).get('fingerprint'), dict) else 'Not available', mono=True)}
+      {row('Public Key Security', (r.get('certificate_inspection') or {}).get('security_assessment', {}).get('key_strength') if isinstance((r.get('certificate_inspection') or {}).get('security_assessment'), dict) else 'UNKNOWN')}
+      {row('Certificate Signature Algorithm', (r.get('certificate_inspection') or {}).get('certificate', {}).get('signature_algorithm') if isinstance((r.get('certificate_inspection') or {}).get('certificate'), dict) else sig.get('signature_algorithm'), mono=True)}
     </table>
   </div>
 

@@ -96,11 +96,26 @@ def verify_pdf_signatures(pdf_bytes: bytes) -> dict[str, Any]:
                     "trust_status": None,
                     "error": None,
                     "_cert_object": None,
+                    "_all_certs": [],
                 }
 
                 try:
                     # Validate embedded signature cryptographically
                     val_result = validate_pdf_signature(emb_sig)
+
+                    # Extract all certificates in the CMS container
+                    all_certs: list[Any] = []
+                    try:
+                        if hasattr(emb_sig, "signed_data") and emb_sig.signed_data is not None:
+                            certs_container = emb_sig.signed_data.get("certificates")
+                            if certs_container:
+                                for c in certs_container:
+                                    if hasattr(c, "chosen"):
+                                        all_certs.append(c.chosen)
+                                    else:
+                                        all_certs.append(c)
+                    except Exception as ce:
+                        logger.debug("Error retrieving CMS certificates: %s", ce)
 
                     # --- Digest algorithm ---
                     try:
@@ -124,6 +139,9 @@ def verify_pdf_signatures(pdf_bytes: bytes) -> dict[str, Any]:
                         cert = getattr(val_result, "signing_cert", None)
                         if cert is not None:
                             sig_detail["_cert_object"] = cert
+                            if cert not in all_certs:
+                                all_certs.insert(0, cert)
+                            sig_detail["_all_certs"] = all_certs
 
                             pub_key = getattr(cert, "public_key", None)
                             if pub_key is not None:
@@ -152,6 +170,8 @@ def verify_pdf_signatures(pdf_bytes: bytes) -> dict[str, Any]:
                                 sig_detail["cert_valid_until"] = str(cert["tbs_certificate"]["validity"]["not_after"].native)
                             except Exception:
                                 pass
+                        else:
+                            sig_detail["_all_certs"] = all_certs
                     except Exception as ce:
                         logger.debug("Cert detail extraction error: %s", ce)
 

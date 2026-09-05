@@ -40,6 +40,66 @@ const { id } = Astro.params;
       <div id="verdict-display"></div>
     </div>
 
+    <!-- WHY THIS VERDICT? Explainable Verification Section -->
+    <div class="section" id="explainable-section">
+      <div class="card" style="border-left: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="section-title" style="margin: 0; font-size: 0.8125rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
+              WHY THIS VERDICT?
+            </span>
+            <span class="badge badge--neutral" id="exp-confidence-badge" style="font-size: 0.6875rem;">CONFIDENCE: —</span>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            DETERMINISTIC VERIFICATION ENGINE
+          </span>
+        </div>
+
+        <!-- Final Reason Callout -->
+        <div id="exp-final-reason-box" style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4); margin-bottom: var(--space-4);">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <span id="exp-verdict-icon" style="font-size: 1.25rem; line-height: 1;">•</span>
+            <div>
+              <div style="font-family: 'Inter', sans-serif; font-size: var(--text-base); color: var(--text-primary); font-weight: 500; line-height: 1.5;" id="exp-final-reason-text">
+                Loading explanation…
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-secondary); margin-top: 6px;" id="exp-summary-text">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Trace & Evidence -->
+        <div class="exp-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--space-4); margin-bottom: var(--space-3);">
+          <!-- Verification Trace -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              VERIFICATION TRACE
+            </div>
+            <div id="exp-trace-list" style="display: flex; flex-direction: column; gap: 8px;">
+            </div>
+          </div>
+
+          <!-- Technical Evidence Summary -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              TECHNICAL EVIDENCE
+            </div>
+            <dl class="kv-list" id="exp-evidence-kv" style="margin: 0;"></dl>
+          </div>
+        </div>
+
+        <!-- Methodology note -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); margin-top: var(--space-2);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);" id="exp-methodology-text">
+            Deterministic rule-based explanation derived from cryptographic verification evidence.
+          </span>
+          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">No AI / Pure Evidence</span>
+        </div>
+      </div>
+    </div>
+
+
     <div class="detail-grid">
       <!-- Left column -->
       <div class="detail-col">
@@ -120,8 +180,85 @@ const { id } = Astro.params;
       </div>
     </div>
 
+    <!-- CERTIFICATE & PUBLIC KEY INSPECTOR -->
+    <div class="section" id="cert-inspector-section" style="margin-top: var(--space-6);">
+      <div class="card" style="border-top: 3px solid var(--accent); background: var(--bg-surface); padding: var(--space-5);">
+        
+        <!-- Section Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span class="section-title" style="margin: 0; font-size: 0.875rem; letter-spacing: 0.05em; font-weight: 600; color: var(--text-primary);">
+              CERTIFICATE &amp; PUBLIC KEY INSPECTOR
+            </span>
+            <span class="badge badge--neutral" id="cert-status-badge">STATUS: —</span>
+            <span class="badge badge--neutral" id="cert-trust-badge">TRUST: —</span>
+            <span class="badge badge--neutral" id="key-strength-badge">KEY: —</span>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            X.509 PKI SPECIFICATION
+          </span>
+        </div>
+
+        <!-- 3-Column Inspection Grid -->
+        <div class="cert-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4);">
+          
+          <!-- Column 1: Identity & Signer -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              SIGNER &amp; ISSUER IDENTITY
+            </div>
+            <dl class="kv-list" id="cert-identity-kv" style="margin: 0;"></dl>
+          </div>
+
+          <!-- Column 2: Public Key & Cryptography -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              PUBLIC KEY &amp; CRYPTOGRAPHY
+            </div>
+            <dl class="kv-list" id="cert-crypto-kv" style="margin: 0;"></dl>
+          </div>
+
+          <!-- Column 3: Fingerprint & Extensions -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              FINGERPRINT &amp; EXTENSIONS
+            </div>
+            <dl class="kv-list" id="cert-extensions-kv" style="margin: 0;"></dl>
+          </div>
+
+        </div>
+
+        <!-- Certificate Chain & Security Findings -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-3);">
+          <!-- Certificate Chain Trace -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              CERTIFICATE CHAIN TRACE
+            </div>
+            <div id="cert-chain-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+
+          <!-- Evidence-Based Security Findings -->
+          <div style="background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: var(--space-4);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3); letter-spacing: 0.04em;">
+              CERTIFICATE SECURITY FINDINGS
+            </div>
+            <div id="cert-findings-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <!-- Fingerprint Disclaimer Notice -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); margin-top: var(--space-2);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--text-muted);">
+            Notice: Certificate fingerprint identifies this certificate; it is not the document authenticity proof.
+          </span>
+          <span class="badge badge--neutral" style="font-size: 0.625rem; font-family: 'IBM Plex Mono', monospace;">X.509 v3 Standard</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Actions -->
-    <div class="section" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+    <div class="section" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:var(--space-6);">
       <button class="btn btn-secondary" id="report-btn">Generate Report</button>
       <a href="/security" id="security-link" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
         Open Security Dashboard
@@ -186,6 +323,89 @@ const { id } = Astro.params;
         <div class="verdict-sublabel">Final Security Verdict</div>
       </div>`;
 
+    // ── Explainable Verification Section ─────────────────────────────────────
+    const exp = r.explainable_verification ?? {};
+    const conf = (exp.confidence ?? 'HIGH').toUpperCase();
+    const confBadge = conf === 'HIGH' ? 'ok' : conf === 'MEDIUM' ? 'warn' : 'neutral';
+    const confEl = document.getElementById('exp-confidence-badge');
+    if (confEl) {
+      confEl.className = `badge badge--${confBadge}`;
+      confEl.textContent = `CONFIDENCE: ${conf}`;
+    }
+
+    const iconEl = document.getElementById('exp-verdict-icon');
+    if (iconEl) {
+      iconEl.textContent = verdict === 'AUTHENTIC' ? '✓' : verdict === 'TAMPERED' ? '✕' : '⚠';
+      iconEl.style.color = verdict === 'AUTHENTIC' ? 'var(--ok)' : verdict === 'TAMPERED' ? 'var(--danger)' : 'var(--warn)';
+    }
+
+    const reasonEl = document.getElementById('exp-final-reason-text');
+    if (reasonEl) {
+      reasonEl.textContent = exp.final_reason || (
+        verdict === 'AUTHENTIC'
+          ? 'Digital signature verification succeeded and the signed content passed integrity validation.'
+          : verdict === 'TAMPERED'
+          ? 'Cryptographic verification failed because the signed content does not validate against the existing signature.'
+          : 'The digital signature is present, but certificate, integrity, or structural checks produced warnings.'
+      );
+    }
+
+    const sumEl = document.getElementById('exp-summary-text');
+    if (sumEl) {
+      sumEl.textContent = exp.summary || `Executive summary: Document classified as ${verdict}.`;
+    }
+
+    // Render Verification Trace
+    const traceEl = document.getElementById('exp-trace-list');
+    if (traceEl) {
+      const steps = exp.verification_steps ?? [];
+      if (steps.length === 0) {
+        traceEl.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:var(--text-xs);color:var(--text-muted);">No trace steps recorded.</div>`;
+      } else {
+        traceEl.innerHTML = steps.map((st) => {
+          const status = (st.status || 'PASS').toUpperCase();
+          const sIcon = status === 'PASS' ? '✓' : status === 'FAIL' ? '✕' : status === 'WARNING' ? '⚠' : '—';
+          const sColor = status === 'PASS' ? 'var(--ok)' : status === 'FAIL' ? 'var(--danger)' : status === 'WARNING' ? 'var(--warn)' : 'var(--text-muted)';
+          return `
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); padding: 4px 0; border-bottom: 1px solid var(--border-subtle);">
+              <div style="display: flex; align-items: flex-start; gap: 8px;">
+                <span style="color: ${sColor}; font-weight: bold; flex-shrink: 0; width: 14px;">${sIcon}</span>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500;">${st.check}</span>
+                  ${st.observed_value ? `<span style="color: var(--text-muted); margin-left: 6px;">[${st.observed_value}]</span>` : ''}
+                  ${st.explanation ? `<div style="color: var(--text-secondary); font-size: 0.6875rem; margin-top: 2px;">${st.explanation}</div>` : ''}
+                </div>
+              </div>
+              <span class="badge badge--${status === 'PASS' ? 'ok' : status === 'FAIL' ? 'danger' : status === 'WARNING' ? 'warn' : 'neutral'}" style="font-size: 0.625rem;">
+                ${status}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Render Technical Evidence Table
+    const evKv = document.getElementById('exp-evidence-kv');
+    if (evKv) {
+      const s = r.signature ?? {};
+      const c = r.certificate ?? {};
+      const intg = r.integrity ?? {};
+      evKv.innerHTML = kvRows([
+        ['Digest Algorithm',     s.digest_algorithm     ?? 'Not detected', true],
+        ['Signature Algorithm',  s.signature_algorithm  ?? 'Not detected', true],
+        ['Public Key Scheme',    s.public_key_algorithm ? `${s.public_key_algorithm} (${s.key_size ?? '?'} bits)` : 'Not detected', true],
+        ['Certificate Trust',    c.trust_status         ?? 'UNAVAILABLE'],
+        ['ByteRange Validity',   Array.isArray(intg.byte_range) && intg.byte_range.length ? 'Valid Range' : 'No Range', true],
+        ['Document Integrity',   intg.status            ?? 'UNKNOWN'],
+      ]);
+    }
+
+    const methEl = document.getElementById('exp-methodology-text');
+    if (methEl && exp.methodology) {
+      methEl.textContent = exp.methodology;
+    }
+
     // Document
     document.getElementById('doc-info').innerHTML = kvRows([
       ['Filename', doc.filename ?? '—'],
@@ -193,6 +413,7 @@ const { id } = Astro.params;
       ['PDF Version', doc.pdf_version ?? '—'],
       ['Fingerprint', doc.fingerprint ?? 'Not available', true],
     ]);
+
 
     // Signature
     const s = r.signature ?? {};
@@ -283,6 +504,9 @@ const { id } = Astro.params;
       </div>`;
     }).join('');
 
+    // ── Certificate & Public Key Inspector ───────────────────────────────────
+    renderCertificateInspector(r);
+
     // Report button & security link
     document.getElementById('report-btn').onclick = () =>
       window.open(`${API}/api/analysis/${r.analysis_id}/report`, '_blank', 'noopener,noreferrer');
@@ -303,6 +527,147 @@ const { id } = Astro.params;
           alert('Error deleting analysis: ' + (err.message || err));
         }
       };
+    }
+  }
+
+  function renderCertificateInspector(r) {
+    const insp = r.certificate_inspection ?? {};
+    const cert = insp.certificate ?? {};
+    const pk = insp.public_key ?? {};
+    const val = insp.validity ?? {};
+    const trust = insp.trust ?? {};
+    const fp = insp.fingerprint ?? {};
+    const sec = insp.security_assessment ?? {};
+    const chain = insp.chain ?? [];
+    const exts = insp.extensions ?? [];
+    const findings = insp.findings ?? [];
+
+    const valStatus = (val.status ?? 'UNKNOWN').toUpperCase();
+    const valClass = valStatus === 'VALID' ? 'ok' : valStatus === 'EXPIRED' ? 'danger' : valStatus === 'NOT_YET_VALID' ? 'warn' : 'neutral';
+    const statusBadge = document.getElementById('cert-status-badge');
+    if (statusBadge) {
+      statusBadge.className = `badge badge--${valClass}`;
+      statusBadge.textContent = `STATUS: ${valStatus}`;
+    }
+
+    const trustStatus = (trust.status ?? 'UNKNOWN').toUpperCase();
+    const trustClass = trustStatus === 'TRUSTED' ? 'ok' : trustStatus === 'SELF_SIGNED' ? 'warn' : trustStatus === 'UNTRUSTED' ? 'danger' : 'neutral';
+    const trustBadge = document.getElementById('cert-trust-badge');
+    if (trustBadge) {
+      trustBadge.className = `badge badge--${trustClass}`;
+      trustBadge.textContent = `TRUST: ${trustStatus}`;
+    }
+
+    const keyStrength = (sec.key_strength ?? 'UNKNOWN').toUpperCase();
+    const keyClass = keyStrength === 'ACCEPTABLE' ? 'ok' : keyStrength === 'WEAK' ? 'danger' : 'neutral';
+    const keyBadge = document.getElementById('key-strength-badge');
+    if (keyBadge) {
+      keyBadge.className = `badge badge--${keyClass}`;
+      keyBadge.textContent = `KEY: ${keyStrength}`;
+    }
+
+    // Identity KV
+    const idKv = document.getElementById('cert-identity-kv');
+    if (idKv) {
+      const subj = cert.subject ?? {};
+      const issu = cert.issuer ?? {};
+      idKv.innerHTML = kvRows([
+        ['Subject CN', typeof subj === 'object' ? (subj.common_name || 'Not available') : (subj || 'Not available')],
+        ['Organization', typeof subj === 'object' ? (subj.organization || 'None / Unspecified') : 'None'],
+        ['Org Unit', typeof subj === 'object' ? (subj.organizational_unit || 'None') : 'None'],
+        ['Country / State', `${typeof subj === 'object' ? (subj.country || '—') : '—'} / ${typeof subj === 'object' ? (subj.state || '—') : '—'}`],
+        ['Issuer CN', typeof issu === 'object' ? (issu.common_name || 'Not available') : (issu || 'Not available')],
+        ['Issuer Org', typeof issu === 'object' ? (issu.organization || 'None / Unspecified') : 'None'],
+        ['Serial Number', cert.serial_number || 'Not available', true],
+        ['Self-Signed', cert.is_self_signed === true ? 'Yes' : cert.is_self_signed === false ? 'No' : 'Unknown'],
+      ]);
+    }
+
+    // Crypto KV
+    const cryptoKv = document.getElementById('cert-crypto-kv');
+    if (cryptoKv) {
+      cryptoKv.innerHTML = kvRows([
+        ['Key Algorithm', pk.algorithm || 'Not available', true],
+        ['Key Size / Curve', pk.curve ? `${pk.curve} (${pk.key_size || '?'} bits)` : pk.key_size ? `${pk.key_size} bits` : 'Not available', true],
+        ['Public Exponent', pk.exponent ? `${pk.exponent} (0x${pk.exponent.toString(16).toUpperCase()})` : 'N/A', true],
+        ['Cert Signature', cert.signature_algorithm || 'Not available', true],
+        ['Doc Signature', r.signature?.signature_algorithm || 'Not available', true],
+        ['Digest Algorithm', r.signature?.digest_algorithm || 'Not available', true],
+        ['Validity Start', val.not_before || 'Not available'],
+        ['Validity End', val.not_after || 'Not available'],
+      ]);
+    }
+
+    // Extensions & Fingerprint KV
+    const extKv = document.getElementById('cert-extensions-kv');
+    if (extKv) {
+      const ku = exts.find(e => e.name?.toLowerCase().includes('keyusage') && !e.name?.toLowerCase().includes('extended'));
+      const eku = exts.find(e => e.name?.toLowerCase().includes('extendedkeyusage'));
+      const san = exts.find(e => e.name?.toLowerCase().includes('altname') || e.name?.toLowerCase().includes('alternativename'));
+      const bc = exts.find(e => e.name?.toLowerCase().includes('basicconstraints'));
+
+      extKv.innerHTML = kvRows([
+        ['SHA-256 Fingerprint', fp.value || 'Not available', true],
+        ['Key Usage', ku?.value || 'Not specified'],
+        ['Extended Key Usage', eku?.value || 'None'],
+        ['Basic Constraints', bc?.value || 'None'],
+        ['Subject Alt Name', san?.value || 'None'],
+        ['Extensions Total', exts.length ? String(exts.length) : 'None'],
+      ]);
+    }
+
+    // Certificate Chain Trace
+    const chainList = document.getElementById('cert-chain-list');
+    if (chainList) {
+      if (!chain || chain.length === 0) {
+        chainList.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:var(--text-xs);color:var(--text-muted);">No certificate chain available.</div>`;
+      } else {
+        chainList.innerHTML = chain.map((node, idx) => {
+          const role = (node.role || 'SIGNER').toUpperCase();
+          const roleBadge = role === 'SIGNER' ? 'accent' : role === 'ROOT_CA' ? 'ok' : 'warn';
+          return `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--text-muted); font-size: 0.75rem;">${idx === 0 ? '↳' : '↓'}</span>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 600;">${node.subject || 'Unknown Cert'}</span>
+                  ${node.serial_number ? `<div style="color: var(--text-muted); font-size: 0.6875rem;">SN: ${node.serial_number}</div>` : ''}
+                </div>
+              </div>
+              <span class="badge badge--${roleBadge}" style="font-size: 0.625rem;">
+                ${role}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Security Findings List
+    const findingsList = document.getElementById('cert-findings-list');
+    if (findingsList) {
+      if (!findings || findings.length === 0) {
+        findingsList.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); color: var(--ok); padding: 8px 0;">
+            <span>✓</span>
+            <span>No certificate security policy violations detected.</span>
+          </div>
+        `;
+      } else {
+        findingsList.innerHTML = findings.map(f => {
+          const sev = (f.severity || 'INFO').toUpperCase();
+          const sevBadge = sev === 'HIGH' ? 'danger' : sev === 'MEDIUM' ? 'warn' : 'neutral';
+          return `
+            <div style="padding: 6px 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--text-primary);">${f.title}</span>
+                <span class="badge badge--${sevBadge}" style="font-size: 0.625rem;">${sev}</span>
+              </div>
+              <div style="font-size: 0.6875rem; color: var(--text-secondary); line-height: 1.4;">${f.description}</div>
+            </div>
+          `;
+        }).join('');
+      }
     }
   }
 

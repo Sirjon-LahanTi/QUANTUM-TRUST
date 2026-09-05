@@ -24,10 +24,13 @@ from app.services import (
     pdf_parser,
     signature_verifier,
     certificate_analyzer,
+    certificate_inspector,
     duplicate_detector,
     threat_engine,
     quantum_analysis,
+    explainable_verification,
 )
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -124,17 +127,29 @@ async def analyze_pdf(
             "signatures": [],
         }
 
-    # ── 5. Analyze certificate ─────────────────────────────────────────────────
+    # ── 5. Analyze & Inspect certificate ───────────────────────────────────────
     cert_info: dict[str, Any] = {
         "subject": None, "issuer": None, "serial_number": None,
         "valid_from": None, "valid_until": None, "trust_status": "UNAVAILABLE",
         "is_expired": None, "is_self_signed": None,
     }
+    cert_inspection: dict[str, Any] = {
+        "status": "NOT_AVAILABLE",
+        "reason": "No digital signature present in document.",
+    }
+
     if sig_result.get("signatures"):
         primary_sig = sig_result["signatures"][0]
         cert_raw = primary_sig.get("_cert_object")
+        all_certs = primary_sig.get("_all_certs")
         if cert_raw is not None:
             cert_info = certificate_analyzer.analyze_certificate(cert_raw)
+            cert_inspection = certificate_inspector.inspect_certificate(
+                cert_source=cert_raw,
+                all_certs=all_certs,
+                document_signature_algo=sig_result.get("signature_algorithm"),
+                document_digest_algo=sig_result.get("digest_algorithm"),
+            )
         else:
             # Reconstruct from already-extracted cert fields
             cert_info.update({
@@ -145,6 +160,42 @@ async def analyze_pdf(
                 "valid_until":   primary_sig.get("cert_valid_until"),
                 "trust_status":  primary_sig.get("trust_status") or "UNAVAILABLE",
             })
+            if primary_sig.get("cert_subject") or primary_sig.get("cert_serial"):
+                cert_inspection = {
+                    "status": "SUCCESS",
+                    "certificate": {
+                        "version": 3,
+                        "serial_number": primary_sig.get("cert_serial"),
+                        "subject": {"common_name": primary_sig.get("cert_subject"), "raw_dn": primary_sig.get("cert_subject")},
+                        "issuer": {"common_name": primary_sig.get("cert_issuer"), "raw_dn": primary_sig.get("cert_issuer")},
+                        "signature_algorithm": primary_sig.get("signature_algorithm"),
+                        "is_self_signed": (primary_sig.get("cert_subject") == primary_sig.get("cert_issuer")),
+                    },
+                    "public_key": {
+                        "algorithm": primary_sig.get("public_key_algorithm") or "RSA",
+                        "key_size": primary_sig.get("key_size"),
+                        "curve": None,
+                        "exponent": None,
+                    },
+                    "validity": {
+                        "status": "EXPIRED" if cert_info.get("is_expired") else "VALID",
+                        "not_before": primary_sig.get("cert_valid_from"),
+                        "not_after": primary_sig.get("cert_valid_until"),
+                    },
+                    "trust": {
+                        "status": primary_sig.get("trust_status") or "UNKNOWN",
+                        "reason": "Derived from signature validation container.",
+                    },
+                    "fingerprint": {"algorithm": "SHA-256", "value": None},
+                    "chain": [],
+                    "extensions": [],
+                    "security_assessment": {
+                        "key_strength": "ACCEPTABLE" if (primary_sig.get("key_size") or 0) >= 2048 else "WEAK",
+                        "policy": "QuantumTrust Default Cryptographic Policy v1.0",
+                        "observations": [],
+                    },
+                    "findings": [],
+                }
 
     # ── 6. Build integrity result ──────────────────────────────────────────────
     integrity_result: dict[str, Any] = {
@@ -185,7 +236,20 @@ async def analyze_pdf(
     dup_result["is_duplicate"] = is_duplicate
     dup_result["match_type"] = match_type
 
-    # ── 12. Assemble result ────────────────────────────────────────────────────
+    # ── 12. Explainable Verification (Deterministic rule-based explanation) ───
+    evidence = explainable_verification.extract_evidence_from_analysis(
+        sig_result=sig_result,
+        cert_info=cert_info,
+        integrity_result=integrity_result,
+        pdf_structure=pdf_structure,
+        dup_result=dup_result,
+        threat_result=threat_result,
+        quantum_result=q_result,
+        cert_inspection=cert_inspection,
+    )
+    explanation_res = explainable_verification.generate_explanation(evidence, verdict)
+
+    # ── 13. Assemble result ────────────────────────────────────────────────────
     now = datetime.now(timezone.utc)
 
     full_result: dict[str, Any] = {
@@ -241,7 +305,10 @@ async def analyze_pdf(
         },
         "verdict": verdict,
         "created_at": now.isoformat(),
+        "explainable_verification": explanation_res.model_dump(),
+        "certificate_inspection": cert_inspection,
     }
+
 
     # ── 13. Persist ────────────────────────────────────────────────────────────
     try:
