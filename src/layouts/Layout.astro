@@ -225,11 +225,13 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
         sidebar?.classList.add('open');
         overlay?.classList.add('visible');
         hamburger?.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
       }
       function closeSidebar() {
         sidebar?.classList.remove('open');
         overlay?.classList.remove('visible');
         hamburger?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
       }
 
       hamburger?.addEventListener('click', () => {
@@ -237,6 +239,15 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
         isOpen ? closeSidebar() : openSidebar();
       });
       overlay?.addEventListener('click', closeSidebar);
+
+      // Close sidebar when any link inside it is tapped on mobile
+      sidebar?.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 1024) {
+            closeSidebar();
+          }
+        });
+      });
 
       // Back / Undo Button functionality
       document.querySelectorAll('.js-back-btn').forEach(btn => {

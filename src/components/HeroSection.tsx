@@ -243,7 +243,7 @@ export default function HeroSection() {
                 }}
                 className="font-[900] uppercase text-black dark:text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-sm"
                 style={{
-                  fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
+                  fontSize: 'clamp(2.6rem, 8.2vw, 7.8rem)',
                   lineHeight: 0.86,
                 }}
               >
@@ -261,7 +261,7 @@ export default function HeroSection() {
                 }}
                 className="font-[900] uppercase text-black dark:text-white tracking-[-0.03em] m-0 p-0 block drop-shadow-sm"
                 style={{
-                  fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
+                  fontSize: 'clamp(2.6rem, 8.2vw, 7.8rem)',
                   lineHeight: 0.86,
                 }}
               >

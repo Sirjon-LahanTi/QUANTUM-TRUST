@@ -771,6 +771,7 @@ import Navigation from '../../components/Navigation.astro';
   window.addEventListener('touchend', () => { isDragging = false; });
   window.addEventListener('touchmove', (e) => {
     if (!isDragging || e.touches.length !== 1) return;
+    if (e.cancelable) e.preventDefault();
     const dx = e.touches[0].clientX - lastMouseX;
     const dy = e.touches[0].clientY - lastMouseY;
     lastMouseX = e.touches[0].clientX;
@@ -779,7 +780,7 @@ import Navigation from '../../components/Navigation.astro';
     rotY += dx * 0.015;
     rotX += dy * 0.015;
     renderBlochSphere();
-  });
+  }, { passive: false });
 
   // --- Format Complex String ---
   function fmtComplex(c: Complex): string {
@@ -1280,6 +1281,15 @@ import Navigation from '../../components/Navigation.astro';
     border-radius: 8px;
     padding: var(--space-3);
     cursor: grab;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  #bloch-canvas {
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    touch-action: none;
   }
 
   .bloch-canvas-wrap:active {
@@ -1297,6 +1307,10 @@ import Navigation from '../../components/Navigation.astro';
   .state-inspector {
     display: flex;
     flex-direction: column;
+  }
+
+  .inspector-section {
+    width: 100%;
   }
 
   .inspector-title {
@@ -1599,8 +1613,6 @@ import Navigation from '../../components/Navigation.astro';
     background: var(--bg-hover);
     border-color: var(--border-accent);
   }
-    background: var(--bg-hover);
-  }
 
   /* Measurement Histogram */
   .measurement-card {
@@ -1814,9 +1826,51 @@ import Navigation from '../../components/Navigation.astro';
       grid-template-columns: 1fr;
       justify-items: center;
     }
+    .matrix-display-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 640px) {
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .metric-card {
+      padding: 10px 12px;
+      gap: 10px;
+    }
+    .metric-icon-wrap {
+      width: 36px;
+      height: 36px;
+    }
+    .metric-val {
+      font-size: 1.25rem;
+    }
+    .preset-flex {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .preset-action-group, .preset-dropdown {
+      width: 100%;
+    }
+    .gate-btn--measure {
+      margin-left: 0;
+      width: 100%;
+      justify-content: center;
+    }
+    .tab-pill-group {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .tab-pill {
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 380px) {
     .metrics-grid {
       grid-template-columns: 1fr;
     }
